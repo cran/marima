@@ -4,14 +4,14 @@
 ##' @description Forecasting of (multivariate) time series of
 ##' marima type using marima type model.
 ##'
-##' @param series = matrix holding the k-variate timeseries.
+##' @param series = matrix holding the kvar-variate timeseries.
 ##' The series is assumed to have the same format
 ##' as the timeseries analysed by marima BEFORE differencing (if
 ##' differencing was used via define.dif)
 ##' (the length, though, does not need to be the same but can be shorter
 ##' or longer). Results
 ##' from estimating the model (for the differenced data, if used) are assumed
-##' to be saved in the input-object 'marima' by marima.
+##' to be saved in the input-object 'marima' (see 'usage') by marima.
 ##'
 ##' The series is assumed to have the total length=(nstart+nstep) (but it
 ##' may be longer. In any case the forecasting is starting from nstart
@@ -23,17 +23,18 @@
 ##'
 ##' If future (independent) x-values for the forecasting are to be used
 ##' these values must be supplied in 'series' at the proper places before
-##' calling 'forecast(...)'
+##' calling 'arma.forecast(...)' (that is except the x-value(s)
+##' corresponding to the last prediction). 
 ##'
-##' @param marima = object holding the marima results to be used for the
-##' forecasting, that is an output object from marima.
+##' @param marima = the object holding the marima results to be used for
+##' the forecasting, that is an output object created by marima.
 ##'
 ##' If the ar- and/or the ma-model do not include a leading unity matrix
 ##' this is automatically taken care of in the function (in that case the
 ##' dimensions of the model arrays used will be, respectively,
-##' (k,k,p+1) and (k,k,q+1)) after inserting the leading unity matrix (if
-##' the object 'marima' was produced by marima, this will automatically be
-##' OK.
+##' (kvar,kvar,p+1) and (kvar,kvar,q+1)) after inserting the leading
+##' unity matrix (if the object 'marima' was produced by marima, this
+##' will automatically be OK.
 ##'
 ##' @param nstart = starting point for forecasting (1st forecast values
 ##' will be for time point t = nstart+1).
@@ -42,7 +43,8 @@
 ##' nstart+1,...,nstart+nstep).
 ##'
 ##' @param dif.poly (most often) output from the function define.dif holding
-##' the ar-representation of the differencing polynomial (define.dif$dif.poly).
+##' the ar-representation of the differencing polynomial
+##' (define.dif$dif.poly).
 ##' If a differenced timeseries was analysed by marima
 ##' the forecast-variance/covariance matrices are calculated for the
 ##' aggregated (original) timeseries if 'dif.poly' is specified. If not,
@@ -59,8 +61,8 @@
 ##' @return residuals = corresponding residuals for input series followed by
 ##' nstep future residuals (all=0).
 ##'
-##' @return prediction.variances = (k,k,nstep) array containing prediction
-##' covariance matrices corresponding to the nstep forecasts.
+##' @return prediction.variances = (kvar,kvar,nstep) array containing
+##' prediction covariance matrices corresponding to the nstep forecasts.
 ##' @return nstart = starting point for prediction (1st prediction at point
 ##' nstart+1).
 ##' @return nstep = length of forecast
@@ -70,38 +72,39 @@
 ##' library(marima)
 ##' data(austr)
 ##' series<-t(austr)
-##' Model5 <- define.model(kvar=7,ar=1,ma=1,rem.var=1,reg.var=6:7)
-##' Marima5 <- marima(series[,1:90],Model5$ar.pattern,Model5$ma.pattern,
+##' Model5 <- define.model(kvar=7, ar=1, ma=1, rem.var=1, reg.var=6:7)
+##' Marima5 <- marima(series[, 1:90], Model5$ar.pattern, Model5$ma.pattern, 
 ##' penalty=1)
 ##' nstart  <- 90
 ##' nstep   <- 10
-##' Forecasts <- arma.forecast(series=series,marima=Marima5,
-##'                nstart=nstart,nstep=nstep)
-##' Year<-series[1,91:100];
-##' Predict<-Forecasts$forecasts[2,91:100]
-##' stdv<-sqrt(Forecasts$pred.var[2,2,])
+##' Forecasts <- arma.forecast(series=series, marima=Marima5, 
+##'                nstart=nstart, nstep=nstep)
+##' Year<-series[1, 91:100];
+##' Predict<-Forecasts$forecasts[2, 91:100]
+##' stdv<-sqrt(Forecasts$pred.var[2, 2, ])
 ##' upper.lim=Predict+stdv*1.645
 ##' lower.lim=Predict-stdv*1.645
-##' Out<-rbind(Year,Predict,upper.lim,lower.lim)
+##' Out<-rbind(Year, Predict, upper.lim, lower.lim)
 ##' print(Out)
 ##' # plot results:
-##' plot(series[1,1:100],Forecasts$forecasts[2,],type='l',xlab='Year',
-##' ylab='Rate of armed suicides',main='Prediction of suicides by firearms',
-##' ylim=c(0.0,4.1))
-##' lines(series[1,1:90],series[2,1:90],type='p')
-##' grid(lty=2,lwd=1,col='black')
+##' plot(series[1, 1:100], Forecasts$forecasts[2, ], type='l', xlab='Year', 
+##' ylab='Rate of armed suicides', main='Prediction of suicides by firearms', 
+##' ylim=c(0.0, 4.1))
+##' lines(series[1, 1:90], series[2, 1:90], type='p')
+##' grid(lty=2, lwd=1, col='black')
 ##' Years<-2005:2014
-##' lines(Years,Predict,type='l')
-##' lines(Years,upper.lim,type='l')
-##' lines(Years,lower.lim,type='l')
+##' lines(Years, Predict, type='l')
+##' lines(Years, upper.lim, type='l')
+##' lines(Years, lower.lim, type='l')
+##' lines(c(2004.5, 2004.5), c(0.0, 2.0), lty = 2)
 ##'
 ##' @importFrom graphics grid plot
 ##' 
 ##' @export
 
-arma.forecast <- function( series=NULL,marima=NULL ,
-                           nstart=NULL , nstep=1 , dif.poly=NULL ) {
-    Y <- series[ , c( 1:(nstart + nstep) )]
+arma.forecast <- function( series=NULL, marima=NULL, 
+                           nstart=NULL, nstep=1, dif.poly=NULL ) {
+    Y <- series[, c( 1:(nstart + nstep) )]
     d <- dim(Y)
     if (d[1] > d[2]) {
         Y <- t(Y)
@@ -109,33 +112,34 @@ arma.forecast <- function( series=NULL,marima=NULL ,
     }
 
     if (is.null(dif.poly)) {
-        dif.poly <- array(diag(d[1]) , dim = c( d[1] , d[1] , 1 ))
+        dif.poly <- array(diag(d[1]), dim = c( d[1], d[1], 1 ))
     }
 
     dif.poly <- check.one( dif.poly )
 
     colnames(Y) <- c(1:d[2])
 
-    means <- marima$mean.pattern
+    means    <- marima$mean.pattern
     averages <- marima$averages
     Constant <- marima$Constant
 
     if (is.null(nstart)) {
         nstart <- d[2]
     }
+    
     Names <- rownames(marima$y.analysed)
     rownames(Y) <- Names
     
-    AR <- pol.mul( marima$ar.estimate, dif.poly ,
-    L = ( dim(marima$ar.estimate)[3] + dim(dif.poly)[3]-2 ) )
+    AR <- pol.mul( marima$ar.estimate, dif.poly,
+    L  <- ( dim(marima$ar.estimate)[3] + dim(dif.poly)[3]-2 ) )
     MA <- marima$ma.estimate
-    p <- dim(AR)[3]
-    q <- dim(MA)[3]
+    p  <- dim(AR)[3]
+    q  <- dim(MA)[3]
 
     print(AR)
     print(MA)
 
-    Rand <- rep(TRUE , d[1])
+    Rand <- rep(TRUE, d[1])
     Regr <- !Rand
 
     sig2 <- marima$resid.cov
@@ -161,7 +165,7 @@ arma.forecast <- function( series=NULL,marima=NULL ,
         # cat(Rand[i],Regr[i],'\n')
         if (!Rand[i] & Regr[i]) {
             cat("variable no.", i, "not random and regressor.\n")
-            zy <- Y[i, (nstart + 1):L]
+            zy <- Y[i, (nstart:(L-1))]
             # zy[5]<-NaN
             if (is.na(sum(zy)) | is.nan(sum(zy))) {
         cat("Variable no.", i, ": illegal (NaN or NA) in future values. \n")
@@ -198,10 +202,10 @@ arma.forecastingY <- function(series = NULL, ar.poly = NULL,
     k <- d[1]
     N <- d[2]
 
-    means <- marima$mean.pattern
+    means    <- marima$mean.pattern
     averages <- marima$averages
     Constant <- marima$Constant
-    cat("dimensions of time series" , k , N , "\n")
+    cat("dimensions of time series", k, N, "\n")
 
     ar <- dim(ar.poly)
     ma <- dim(ma.poly)
@@ -213,8 +217,15 @@ arma.forecastingY <- function(series = NULL, ar.poly = NULL,
     forecasts <- residuals
     kvar <- ar[1]
 
-    extra <- max(ar[3], ma[3])
+    extra <- ar[3]
     su0 <- matrix(0, nrow=kvar, ncol=1)
+
+    if( extra > 1 ){
+        for (i in 1:extra){
+            forecasts[, i] <- averages * means
+            residuals[, i] <- yseries[, i] - forecasts[, i]           
+        }
+    }
 
     for (i in extra:N){
         suar <- su0
@@ -230,10 +241,10 @@ arma.forecastingY <- function(series = NULL, ar.poly = NULL,
         suma <- su0
         if (ma[3] > 1) {
             for (j in 2:ma[3]) {
+                if( i+1-j > 0 )  {
                 suma <- suma + matrix(ma.poly[, , j], nrow = kvar) %*%
                     matrix(residuals[, (i + 1 - j)], ncol = 1)
-                if (i < 0)
-                  cat("i,suma= ", i, suma, "\n")
+                }
             }
         }
 
@@ -278,7 +289,10 @@ arma.forecastingY <- function(series = NULL, ar.poly = NULL,
 ##'                    (if so) before being analysed by marima. 
 ##'
 ##' @return = pred.var   = variance-covariances for nstep forecasts
+##' (an array with dimension (kvar,kvar,nstep).
+##' 
 ##' @return = rand.shock = corresponding random shock representation
+##' of the model used.
 ##'
 
 forec.var <- function(marima, nstep = 1, dif.poly = NULL) {
@@ -331,42 +345,44 @@ forec.var <- function(marima, nstep = 1, dif.poly = NULL) {
 
 ##' @title arma.filter 
 ##' 
-##' @description Filtering of (multivariate) time series with marima
+##' @description Filtering of (kvar-variate) time series with marima
 ##' type model.
 ##' 
 ##' Calculation of residuals and filtered values of timeseries using
 ##' a marima model.
 ##'
-##' @param series matrix holding the k by n multivariate timeseries
-##' (if k>n the series is transposed and a warning is given).
+##' @param series matrix holding the kvar by n multivariate timeseries
+##' (if (kvar > n) the series is transposed and a warning is given).
 ##'
-##' @param ar.poly (k,k,p+1) array containing autoregressive matrix
+##' @param ar.poly (kvar,kvar,p+1) array containing autoregressive matrix
 ##' polynomial model part. If the filtering is to be performed for
 ##' undifferenced data when the analysis (in marima) was done for differenced
 ##' data, the input array ar.poly should incorporate the ar-representation
 ##' of the differensing operation (using, for example:
 ##' ar.poly <- pol.mul(ar.estimate, dif.poly,
-##'      L = ( dim(ar.estimates)[3]+dim(dif.poly)[3] ) ) , where 'dif.poly'
-##' was obtained when differensing the time series before analysing it
-##' (giving the ar.estimate) . 
+##' L = ( dim(ar.estimates)[3]+dim(dif.poly)[3])), where 'dif.poly'
+##' was obtained when differencing the time series (using define.dif)
+##' before analysing it with marima (giving the ar.estimate) . 
 ##'
-##' @param ma.poly (k,k,q+1) array containing moving average matrix
+##' @param ma.poly (kvar,kvar,q+1) array containing moving average matrix
 ##' polynomial model part.
 ##'
 ##' If a leading unity matrix is not included in the ar- and/or the ma-part
 ##' of the model this is automatically taken care of in the function
 ##' (in that case the dimensions of the model arrays used in arma.filter()
-##'  are, respectively, (k,k,p+1) and (k,k,q+1)).
+##'  are, respectively, (kvar,kvar,p+1) and (kvar,kvar,q+1)).
 ##'
-##' @param means vector (length kvar) indicating whether means are
+##' @param means vector (length = kvar) indicating whether means are
 ##' subtracted or not (0/1). Default : means=1 saying that all means
-##' are subtracted (equivalent to means = c(1,1,...,1).
+##' are subtracted (equivalent to means = c(1,1,...,1)).
 ##'
-##' @return estimates estimated values for input series
+##' @return estimates = estimated values for input series
 ##'
-##' @return residuals corresponding residuals
+##' @return residuals = corresponding residuals
 ##'
-##' Both estimates and residuals are organised as k by n matrices.
+##' @return averages = averages of variables in input series
+##'
+##' @return mean.pattern = pattern of means as used in filtering
 ##'
 ##' @examples
 ##'
@@ -384,7 +400,7 @@ forec.var <- function(marima, nstep = 1, dif.poly = NULL) {
 ##'      Marima5$ma.estimates)
 ##' # Compare residuals
 ##'
-##' plot(Marima5$residuals[2,4:89],Resid$residuals[2,5:90],
+##' plot(Marima5$residuals[2,4:89], Resid$residuals[2,5:90],
 ##' xlab='marima residuals', ylab='arma.filter residuals')
 ##'
 ##' @export
@@ -394,7 +410,7 @@ arma.filter <- function(series = NULL, ar.poly = array(diag(kvar),
        dim = c(kvar, kvar, 1)), means = 1) {
     "[" <- function(x, ...) .Primitive("[")(x, ..., drop = FALSE)
     
-    cat("Start of arma.filter \n")
+    cat("arma.filter is being called \n")
 
     if (is.null(series)) {
         stop("No input series specified in input to arma.filter \n")
@@ -408,7 +424,7 @@ arma.filter <- function(series = NULL, ar.poly = array(diag(kvar),
     }
 
     vmeans <- means
-    cat("vmeans,means=", vmeans, means, "\n")
+    # cat("vmeans,means=", vmeans, means, "\n")
     d <- dim(series)
     kvar <- d[1]
 
@@ -425,8 +441,8 @@ arma.filter <- function(series = NULL, ar.poly = array(diag(kvar),
             series[i, ] <- series[i, ] - averages[i]
         }
     }
-    cat("means=", means, "\n")
-    cat(averages, "\n")
+    cat("indicators for means=", means, "\n")
+    # cat(averages, "\n")
 
     ar.poly <- check.one(ar.poly)
     ma.poly <- check.one(ma.poly)
@@ -499,7 +515,7 @@ arma.filter <- function(series = NULL, ar.poly = array(diag(kvar),
     return(list(estimates = estimates,
                 residuals = residuals,
                 averages = averages,
-                means = means))
+                mean.pattern = means))
 }
 
     

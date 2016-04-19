@@ -19,8 +19,10 @@ ma.estimates are used)}
 }
 \value{
 = pred.var   = variance-covariances for nstep forecasts
+(an array with dimension (kvar,kvar,nstep).
 
 = rand.shock = corresponding random shock representation
+of the model used.
 }
 \description{
 Function for calculation of variances of nstep forecasts

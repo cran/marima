@@ -8,40 +8,42 @@ arma.filter(series = NULL, ar.poly = array(diag(kvar), dim = c(kvar, kvar,
   1)), ma.poly = array(diag(kvar), dim = c(kvar, kvar, 1)), means = 1)
 }
 \arguments{
-\item{series}{matrix holding the k by n multivariate timeseries
-(if k>n the series is transposed and a warning is given).}
+\item{series}{matrix holding the kvar by n multivariate timeseries
+(if (kvar > n) the series is transposed and a warning is given).}
 
-\item{ar.poly}{(k,k,p+1) array containing autoregressive matrix
+\item{ar.poly}{(kvar,kvar,p+1) array containing autoregressive matrix
 polynomial model part. If the filtering is to be performed for
 undifferenced data when the analysis (in marima) was done for differenced
 data, the input array ar.poly should incorporate the ar-representation
 of the differensing operation (using, for example:
 ar.poly <- pol.mul(ar.estimate, dif.poly,
-     L = ( dim(ar.estimates)[3]+dim(dif.poly)[3] ) ) , where 'dif.poly'
-was obtained when differensing the time series before analysing it
-(giving the ar.estimate) .}
+L = ( dim(ar.estimates)[3]+dim(dif.poly)[3])), where 'dif.poly'
+was obtained when differencing the time series (using define.dif)
+before analysing it with marima (giving the ar.estimate) .}
 
-\item{ma.poly}{(k,k,q+1) array containing moving average matrix
+\item{ma.poly}{(kvar,kvar,q+1) array containing moving average matrix
 polynomial model part.
 
 If a leading unity matrix is not included in the ar- and/or the ma-part
 of the model this is automatically taken care of in the function
 (in that case the dimensions of the model arrays used in arma.filter()
- are, respectively, (k,k,p+1) and (k,k,q+1)).}
+ are, respectively, (kvar,kvar,p+1) and (kvar,kvar,q+1)).}
 
-\item{means}{vector (length kvar) indicating whether means are
+\item{means}{vector (length = kvar) indicating whether means are
 subtracted or not (0/1). Default : means=1 saying that all means
-are subtracted (equivalent to means = c(1,1,...,1).}
+are subtracted (equivalent to means = c(1,1,...,1)).}
 }
 \value{
-estimates estimated values for input series
+estimates = estimated values for input series
 
-residuals corresponding residuals
+residuals = corresponding residuals
 
-Both estimates and residuals are organised as k by n matrices.
+averages = averages of variables in input series
+
+mean.pattern = pattern of means as used in filtering
 }
 \description{
-Filtering of (multivariate) time series with marima
+Filtering of (kvar-variate) time series with marima
 type model.
 
 Calculation of residuals and filtered values of timeseries using
@@ -62,7 +64,7 @@ Resid <- arma.filter(series,Marima5$ar.estimates,
      Marima5$ma.estimates)
 # Compare residuals
 
-plot(Marima5$residuals[2,4:89],Resid$residuals[2,5:90],
+plot(Marima5$residuals[2,4:89], Resid$residuals[2,5:90],
 xlab='marima residuals', ylab='arma.filter residuals')
 }
 

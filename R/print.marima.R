@@ -4,7 +4,8 @@
 ##'
 ##' @param x = a marima object with results of marima analysis.
 ##' @param estimates = TRUE/FALSE: printout of parameter estimates.
-##' @param pvalues   = TRUE/FALSE: printout of parameter estimates.
+##' @param pvalues   = TRUE/FALSE: printout of (approximate) p-values for
+##' parameter estimates.
 ##' @param pattern   = TRUE/FALSE: printout of model definition pattern(s).
 ##' @param fvalues   = TRUE/FALSE: printout of parameter (approximate)
 ##' F-values.

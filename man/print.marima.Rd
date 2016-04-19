@@ -12,7 +12,8 @@
 
 \item{estimates}{= TRUE/FALSE: printout of parameter estimates.}
 
-\item{pvalues}{= TRUE/FALSE: printout of parameter estimates.}
+\item{pvalues}{= TRUE/FALSE: printout of (approximate) p-values for
+parameter estimates.}
 
 \item{pattern}{= TRUE/FALSE: printout of model definition pattern(s).}
 

@@ -18,7 +18,8 @@ unity matrix)
 \description{
 Calculation of left inverse of matrix polynomial. The
 leading term
-is expected to be the (k by k) identity matrix. Is checked.
+is expected to be the (k by k) identity matrix. This is checked
+and the proper leading unity terms are taken into account.
 
 phi = matrix polynomial coefficients = I,phi1,phi2,...phi(p)
 dim(phi) = c(k,k,p+1)

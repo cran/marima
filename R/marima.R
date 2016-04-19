@@ -1,7 +1,16 @@
 ##' @title marima
 ##'
-##' @description Estimate Multivariate Arima model using Spliid's Algorithm.
+##' @description Estimate multivariate arima and arima-x models.
+##' Setting up the proper model for (especially) arima-x estimation
+##' can be accomplished using the routine 'define.model' that can
+##' assist in setting up the necessary autoregressive and moving average
+##' patterns used as input to 'marima'.
 ##'
+##' A more elaborate description of 'marima' and how it is used
+##' can be downloaded from:
+##' 
+##' http://www.imm.dtu.dk/~hspl/marima.use.pdf
+##' 
 ##' @param DATA time series matrix, dim(DATA) = c(kvar,n),
 ##' where 'kvar' is the dimension of the time series and 'n' is the
 ##' length of the series. If DATA is organized (n,kvar) (as a data.frame
@@ -16,21 +25,27 @@
 ##' @param ma.pattern moving average pattern for model (see define.model).
 ##' If ma.pattern is not specified a pure ar-model is estimated. In this case
 ##' the estimation is carried by regression analysis in a few steps.
-##' @param max.iter max. number of iterations in estimation (default = 50,
-##' which often is more than enough).
-##' @param means 0/1 indicator vector of length kvar,  indicating
+##' @param max.iter max. number of iterations in estimation (max.iter=50
+##' is default which, generally, is more than enough).
+##' @param means 0/1 indicator vector of length kvar, indicating
 ##' which variables in the analysis should be means adjusted or not.
 ##' Default: means=1 and all variables are means adjusted.
 ##' If means=0 is used, no variables are means adjusted.
-##' @param weight weighting factor for smoothing the repeated estimation
-##' procedure. Default is weight=0.33 which often works well. If weight>0.33
-##' is specified more damping will result (e.g. weight=0.66).
-##' @param Plot 'trace' or 'log.det' which results in a plot that shows
+##' @param weight weighting factor for smoothing the repeated
+##' estimation procedure. Default is weight=0.33 which often works
+##' well. If weight>0.33 (e.g. weight=0.66) is specified more damping
+##' will result. If a large damping factor is used, the successive
+##' estimations are more cautious, and a slower (but safer)
+##' convergence (if possible) may result (max.iter may have to be
+##' increased to, say, max.iter=75.
+##' @param Plot 'none' or 'trace' or 'log.det' indicates a plot that shows
 ##' how the residual covariance matrix (resid.cov) develops with the
-##' iterations. If Plot= 'trace' a plot of the trace of the residual
+##' iterations.
+##' If Plot= 'none' no plot is generated.
+##' If Plot= 'trace' a plot of the trace of the residual
 ##' covariance matrix versus iterations is generated.
 ##' If Plot='log.det' the log(determinant) of the residual
-##' covariance matrix (resid.cov) is generated. Default is Plot=FALSE.
+##' covariance matrix (resid.cov) is generated. Default is Plot= 'none'.
 ##' @param Check (TRUE/FALSE) results (if TRUE) in a printout of some
 ##' controls of the call to arima. Useful in the first attemp(s) to use
 ##' marima. Default=FALSE.
@@ -180,7 +195,7 @@
 marima <- function(DATA = NULL, ar.pattern = NULL,
                    ma.pattern = NULL, means = 1,
                    max.iter = 50, penalty = 0, weight = 0.33,
-                   Plot = FALSE, Check = FALSE) {
+                   Plot = 'none', Check = FALSE) {
     
     Test <- FALSE
     kvar <- min(dim(DATA))
@@ -256,6 +271,7 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
         cat("Calling marima. Data dimensions (kvar,N) = ", kvar, N, "\n")
         cat("Coefficient polynomial dimensions = ", dim(AR), " and ",
             dim(MA), "\n")
+        cat("including leading unity matrix. \n")
         
         if (is.null(ar.pattern)) {
             cat("no ar.pattern specified \n")
@@ -277,16 +293,16 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
         cat(" ... \n")
         cat("End of data (5 last observations): \n")
         print(DATA[(N - 4):N, ])
-        cat( " \n ")
-        cat("Calling parameters in use: \n")
-        cat("max.iter=", max.iter, ", means=", means, ", penalty=",
-            penalty, " \n ")
-        cat("weight=", weight, ", Plot= ", Plot,
-            ", Check  =", Check, " \n ")
-        cat("The above printout can be suppressed ",
+        cat( " \n")
+        cat(" Calling parameters in use: \n")
+        cat(" max.iter= ", max.iter, ", means =", means, ", penalty =",
+            penalty, ", \n")
+        cat(" weight =", weight, ", Plot = ", Plot,
+            ", Check = ", Check, " \n")
+        cat(" The above printout can be suppressed ",
          "by calling with Check=FALSE. \n ")
     }
-    ## End-of-control output
+    # End-of-control output
 
     ## Construct ar- and ma-polynomial arrays:
     ARmodel <- matrix(0, nrow = kvar, ncol = (kvar * dim(AR)[3]))

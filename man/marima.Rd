@@ -11,7 +11,7 @@ arma model.
 }
 \usage{
 marima(DATA = NULL, ar.pattern = NULL, ma.pattern = NULL, means = 1,
-  max.iter = 50, penalty = 0, weight = 0.33, Plot = FALSE,
+  max.iter = 50, penalty = 0, weight = 0.33, Plot = "none",
   Check = FALSE)
 }
 \arguments{
@@ -32,13 +32,13 @@ If ar.pattern is not specified a pure ma-model is estimated.}
 If ma.pattern is not specified a pure ar-model is estimated. In this case
 the estimation is carried by regression analysis in a few steps.}
 
-\item{means}{0/1 indicator vector of length kvar,  indicating
+\item{means}{0/1 indicator vector of length kvar, indicating
 which variables in the analysis should be means adjusted or not.
 Default: means=1 and all variables are means adjusted.
 If means=0 is used, no variables are means adjusted.}
 
-\item{max.iter}{max. number of iterations in estimation (default = 50,
-which often is more than enough).}
+\item{max.iter}{max. number of iterations in estimation (max.iter=50
+is default which, generally, is more than enough).}
 
 \item{penalty}{parameter used in the R function 'step' for
 stepwise model reduction. If penalty=2, the conventional
@@ -49,16 +49,22 @@ significance of the individual parameter estimates in the final
 model can be checked by considering the (approximate) 'ar.pvalues'
 and the 'ma.pvalues' calculated by marima.}
 
-\item{weight}{weighting factor for smoothing the repeated estimation
-procedure. Default is weight=0.33 which often works well. If weight>0.33
-is specified more damping will result (e.g. weight=0.66).}
+\item{weight}{weighting factor for smoothing the repeated
+estimation procedure. Default is weight=0.33 which often works
+well. If weight>0.33 (e.g. weight=0.66) is specified more damping
+will result. If a large damping factor is used, the successive
+estimations are more cautious, and a slower (but safer)
+convergence (if possible) may result (max.iter may have to be
+increased to, say, max.iter=75.}
 
-\item{Plot}{'trace' or 'log.det' which results in a plot that shows
+\item{Plot}{'none' or 'trace' or 'log.det' indicates a plot that shows
 how the residual covariance matrix (resid.cov) develops with the
-iterations. If Plot= 'trace' a plot of the trace of the residual
+iterations.
+If Plot= 'none' no plot is generated.
+If Plot= 'trace' a plot of the trace of the residual
 covariance matrix versus iterations is generated.
 If Plot='log.det' the log(determinant) of the residual
-covariance matrix (resid.cov) is generated. Default is Plot=FALSE.}
+covariance matrix (resid.cov) is generated. Default is Plot= 'none'.}
 
 \item{Check}{(TRUE/FALSE) results (if TRUE) in a printout of some
 controls of the call to arima. Useful in the first attemp(s) to use
@@ -125,7 +131,16 @@ Object of class marima containing:
  randoms = which are random variables in problem?
 }
 \description{
-Estimate Multivariate Arima model using Spliid's Algorithm.
+Estimate multivariate arima and arima-x models.
+Setting up the proper model for (especially) arima-x estimation
+can be accomplished using the routine 'define.model' that can
+assist in setting up the necessary autoregressive and moving average
+patterns used as input to 'marima'.
+
+A more elaborate description of 'marima' and how it is used
+can be downloaded from:
+
+http://www.imm.dtu.dk/~hspl/marima.use.pdf
 }
 \examples{
 # Example 1:
