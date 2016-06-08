@@ -2,9 +2,9 @@
 ##' @title arma.forecast
 ##' 
 ##' @description Forecasting of (multivariate) time series of
-##' marima type using marima type model.
+##' using marima type model.
 ##'
-##' @param series = matrix holding the kvar-variate timeseries.
+##' @param series   matrix holding the kvar-variate timeseries.
 ##' The series is assumed to have the same format
 ##' as the timeseries analysed by marima BEFORE differencing (if
 ##' differencing was used via define.dif)
@@ -26,20 +26,20 @@
 ##' calling 'arma.forecast(...)' (that is except the x-value(s)
 ##' corresponding to the last prediction). 
 ##'
-##' @param marima = the object holding the marima results to be used for
+##' @param marima   the object holding the marima results to be used for
 ##' the forecasting, that is an output object created by marima.
 ##'
 ##' If the ar- and/or the ma-model do not include a leading unity matrix
 ##' this is automatically taken care of in the function (in that case the
 ##' dimensions of the model arrays used will be, respectively,
-##' (kvar,kvar,p+1) and (kvar,kvar,q+1)) after inserting the leading
+##' (kvar, kvar, p+1) and (kvar, kvar, q+1)) after inserting the leading
 ##' unity matrix (if the object 'marima' was produced by marima, this
 ##' will automatically be OK.
 ##'
-##' @param nstart = starting point for forecasting (1st forecast values
+##' @param nstart   starting point for forecasting (1st forecast values
 ##' will be for time point t = nstart+1).
 ##'
-##' @param nstep = length of forecast (forecasts will be for time points
+##' @param nstep  length of forecast (forecasts will be for time points
 ##' nstart+1,...,nstart+nstep).
 ##'
 ##' @param dif.poly (most often) output from the function define.dif holding
@@ -61,7 +61,7 @@
 ##' @return residuals = corresponding residuals for input series followed by
 ##' nstep future residuals (all=0).
 ##'
-##' @return prediction.variances = (kvar,kvar,nstep) array containing
+##' @return prediction.variances = (kvar, kvar, nstep) array containing
 ##' prediction covariance matrices corresponding to the nstep forecasts.
 ##' @return nstart = starting point for prediction (1st prediction at point
 ##' nstart+1).
@@ -279,19 +279,19 @@ arma.forecastingY <- function(series = NULL, ar.poly = NULL,
 ##' @description Function for calculation of variances of nstep forecasts
 ##' using a marima type model.
 ##'
-##' @param marima   =  marima object (cov.u and ar.estimates and
+##' @param marima    marima object (cov.u and ar.estimates and
 ##'                    ma.estimates are used)
-##' @param nstep    =  length of forecast
+##' @param nstep     length of forecast
 ##'
-##' @param dif.poly =  autoregressive representation of differencing
+##' @param dif.poly   autoregressive representation of differencing
 ##'                    polynomial as constructed by the function
 ##'                    define.dif(...) when the time series is differenced
 ##'                    (if so) before being analysed by marima. 
 ##'
-##' @return = pred.var   = variance-covariances for nstep forecasts
-##' (an array with dimension (kvar,kvar,nstep).
+##' @return pred.var    = variance-covariances for nstep forecasts
+##' (an array with dimension (kvar, kvar, nstep).
 ##' 
-##' @return = rand.shock = corresponding random shock representation
+##' @return  rand.shock   = corresponding random shock representation
 ##' of the model used.
 ##'
 
@@ -354,7 +354,7 @@ forec.var <- function(marima, nstep = 1, dif.poly = NULL) {
 ##' @param series matrix holding the kvar by n multivariate timeseries
 ##' (if (kvar > n) the series is transposed and a warning is given).
 ##'
-##' @param ar.poly (kvar,kvar,p+1) array containing autoregressive matrix
+##' @param ar.poly (kvar, kvar, p+1) array containing autoregressive matrix
 ##' polynomial model part. If the filtering is to be performed for
 ##' undifferenced data when the analysis (in marima) was done for differenced
 ##' data, the input array ar.poly should incorporate the ar-representation
@@ -364,17 +364,17 @@ forec.var <- function(marima, nstep = 1, dif.poly = NULL) {
 ##' was obtained when differencing the time series (using define.dif)
 ##' before analysing it with marima (giving the ar.estimate) . 
 ##'
-##' @param ma.poly (kvar,kvar,q+1) array containing moving average matrix
+##' @param ma.poly (kvar, kvar, q+1) array containing moving average matrix
 ##' polynomial model part.
 ##'
 ##' If a leading unity matrix is not included in the ar- and/or the ma-part
 ##' of the model this is automatically taken care of in the function
 ##' (in that case the dimensions of the model arrays used in arma.filter()
-##'  are, respectively, (kvar,kvar,p+1) and (kvar,kvar,q+1)).
+##'  are, respectively, (kvar, kvar, p+1) and (kvar, kvar, q+1)).
 ##'
 ##' @param means vector (length = kvar) indicating whether means are
-##' subtracted or not (0/1). Default : means=1 saying that all means
-##' are subtracted (equivalent to means = c(1,1,...,1)).
+##' subtracted or not (0/1). Default : means = 1 saying that all means
+##' are subtracted (equivalent to means = c(1, 1, ..., 1)).
 ##'
 ##' @return estimates = estimated values for input series
 ##'

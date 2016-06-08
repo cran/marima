@@ -3,15 +3,17 @@
 ##' @description Calculation of left inverse of matrix polynomial. The
 ##' leading term
 ##' is expected to be the (k by k) identity matrix. This is checked
-##' and the proper leading unity terms are taken into account.
+##' and the proper leading unity term is taken into account when the
+##' inverse is calculated.
 ##'
-##' phi = matrix polynomial coefficients = I,phi1,phi2,...phi(p)
-##' dim(phi) = c(k,k,p+1)
-##'    k   = dimension of coefficient matrices (k by k)
-##'    L  = order of polynomial (length=1+L , including leading unity matrix)
+##' phi = matrix polynomial coefficients = I, phi1, phi2, ..., phi(p).
+##' 
+##' dim(phi) = c(k, k, p+1) where k = dimension of coefficient
+##' matrices (k by k), and L  = order of polynomial (length = 1+L ,
+##' including the leading unity matrix).
 ##'
-##' @param phi polynomium to invert
-##' @param L   order of inverse polynomium
+##' @param phi polynomium (an array) to invert
+##' @param L  order of inverse polynomium
 ##'
 ##' @return  left inverse of phi of order L (L+1 terms including leading
 ##' unity matrix)
@@ -27,7 +29,7 @@
 pol.inv <- function(phi, L) {
     aphi <- check.one(phi)
     k <- dim(aphi)[1]
-    # if (dim(phi)[3]==dim(aphi)[3]) {up<-L+1}
+    # if (dim(phi)[3]==dim(aphi)[3]) {up <- L+1}
     up <- L + 1
     ip <- dim(aphi)[3]
     polinv <- array(0, dim = c(k, k, up))
@@ -65,9 +67,9 @@ pol.inv <- function(phi, L) {
 ##'
 ##' @examples
 ##' set.seed(4711)
-##' p1<-check.one(matrix(rnorm(16),nrow=4))
-##' p2<-check.one(array(rnorm(32),dim=c(4,4,2)))
-##' p12<-pol.mul(p1,p2,L=(2+3))
+##' p1 <- check.one(matrix(rnorm(16), nrow=4))
+##' p2 <- check.one(array(rnorm(32),dim=c(4, 4, 2)))
+##' p12 <- pol.mul(p1, p2, L=(2+3))
 ##' short.form(p12)
 ##'
 ##' @export
@@ -110,9 +112,9 @@ pol.mul <- function(eta, theta, L) {
 ##'
 ##' @examples
 ##' set.seed(4711)
-##' p1  <- check.one(matrix(rnorm(16),nrow=4))
-##' p2  <- check.one(array(rnorm(32),dim=c(4,4,2)))
-##' randshock <- rand.shock(ar.poly=p1,ma.poly=p2,L=6)
+##' p1 <- check.one(matrix(rnorm(16),nrow=4))
+##' p2 <- check.one(array(rnorm(32),dim=c(4, 4, 2)))
+##' randshock <- rand.shock(ar.poly=p1, ma.poly=p2, L=6)
 ##' short.form(randshock)
 ##'
 ##' @export
@@ -129,18 +131,18 @@ rand.shock <- function(ar.poly, ma.poly, L) {
 ##'
 ##' @description Calculation of inverse form for arma model
 ##'
-##' @param ar.poly =autoregressive matrix part of model (array(k,k,ar-order)).
-##' @param ma.poly =moving average matrix part of model (array(k,k,ma-order)).
+##' @param ar.poly =autoregressive matrix part of model (array(k, k, ar-order)).
+##' @param ma.poly =moving average matrix part of model (array(k, k, ma-order)).
 ##' @param L  =order of return polynomial (length=L+1 including leading
 ##' unity matrix).
 ##'
-##' @return inverse form for arma model up to order L (array(k,k,L+1)).
+##' @return inverse form for arma model up to order L (array(k, k, L+1)).
 ##'
 ##' @examples
 ##' set.seed(4711)
-##' p1  <- check.one(matrix(rnorm(16),nrow=4))
-##' p2  <- check.one(array(rnorm(32),dim=c(4,4,2)))
-##' inverse <- inverse.form(ar.poly=p1,ma.poly=p2,L=6)
+##' p1  <- check.one(matrix(rnorm(16), nrow=4))
+##' p2  <- check.one(array(rnorm(32),dim=c(4, 4, 2)))
+##' inverse <- inverse.form(ar.poly=p1, ma.poly=p2, L=6)
 ##' short.form(inverse)
 ##'
 ##' @export
@@ -158,7 +160,7 @@ inverse.form <- function(ar.poly, ma.poly, L) {
 ##' @description Function to check and insert leading unity matrix
 ##' if NOT present.
 ##'
-##' @param polyn (k,k,...) matrix polynomium with or without leading
+##' @param polyn (k, k, ...) matrix polynomium with or without leading
 ##' unity matrix.
 ##'
 ##' @return polyn (array) with a leading unity matrix being
@@ -166,8 +168,8 @@ inverse.form <- function(ar.poly, ma.poly, L) {
 ##'
 ##' @examples
 ##' set.seed(4711)
-##' X<-array(rnorm(32),dim=c(4,4,2))
-##' X<-check.one(X)
+##' X <- array(rnorm(32),dim=c(4, 4, 2))
+##' X <- check.one(X)
 ##' short.form(X)
 ##'
 ##' @export
@@ -242,17 +244,17 @@ lead.one <- function(polyn, add = 0) {
 ##' @param polyn the polynomium the order of which is determined.
 ##' 
 ##' @param digits number of significant digits to be considered (values
-##' smaller than 10^(-digits) are taken to be 0 (zero).
+##' smaller than 10^(-digits) are taken to be 0 (zero)).
 ##'
 ##' @return pol.order order of polynomium polyn.
 ##' (exclusive the leading unity matrix if present.
 ##' pol.order=0 corresponds to the k by k unity matrix)
 ##'
 ##' @examples
-##' pol        <- array(1e-8*rnorm(96),dim=c(4,4,6))
-##' pol[,,1:3] <- array(rnorm(48),dim=c(4,4,3))
-##' pol.order(polyn=pol,digits=12)
-##' pol.order(polyn=pol,digits=4)
+##' pol          <- array(1e-8*rnorm(96),dim=c(4,4,6))
+##' pol[, , 1:3] <- array(rnorm(48), dim=c(4,4,3))
+##' pol.order(polyn=pol, digits=12)
+##' pol.order(polyn=pol, digits=4)
 ##'
 ##' @export
 
@@ -272,4 +274,5 @@ pol.order <- function(polyn = NULL, digits = 12) {
     }
     return(pol.order)
 }
+
 

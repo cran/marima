@@ -11,12 +11,12 @@
 ##' 
 ##' http://www.imm.dtu.dk/~hspl/marima.use.pdf
 ##' 
-##' @param DATA time series matrix, dim(DATA) = c(kvar,n),
+##' @param DATA time series matrix, dim(DATA) = c(kvar, n), 
 ##' where 'kvar' is the dimension of the time series and 'n' is the
-##' length of the series. If DATA is organized (n,kvar) (as a data.frame
+##' length of the series. If DATA is organized (n, kvar) (as a data.frame
 ##' e.g.) it is automatically transposed in marima, and the user need
 ##' not care about it. Also, and consequently, the output residuals and
-##' fitted values matrices are both organised c(kvar,n) at return from marima.
+##' fitted values matrices are both organised c(kvar, n) at return from marima.
 ##' The DATA is checked for completeness. Cases which include 'NA's or 'NaN's
 ##' are initially left out. A message is given (on the console) and the active
 ##' cases are given in the output object (...$used.cases).
@@ -24,7 +24,7 @@
 ##' If ar.pattern is not specified a pure ma-model is estimated.
 ##' @param ma.pattern moving average pattern for model (see define.model).
 ##' If ma.pattern is not specified a pure ar-model is estimated. In this case
-##' the estimation is carried by regression analysis in a few steps.
+##' the estimation is carried out by regression analysis in a few steps.
 ##' @param max.iter max. number of iterations in estimation (max.iter=50
 ##' is default which, generally, is more than enough).
 ##' @param means 0/1 indicator vector of length kvar, indicating
@@ -91,7 +91,7 @@
 ##'
 ##'  averages  = averages of input variables
 ##'
-##'  Constant  = estimated model constant = (sum_i(ar[,,i])) x averages
+##'  Constant  = estimated model constant = (sum_i(ar[, , i])) x averages
 ##'
 ##'  call.ar.pattern = calling ar.pattern
 ##'
@@ -129,23 +129,23 @@
 ##' # Generate a 4-variate time series (in this example):
 ##' #
 ##' kvar<-4 ; set.seed(4711)
-##' y4<-matrix(round(100*rnorm(4*1000,mean=2.0)),nrow=kvar)
+##' y4<-matrix(round(100*rnorm(4*1000, mean=2.0)), nrow=kvar)
 ##' # If wanted define differencing of variable 4 (lag=1)
 ##' # and variable 3 (lag=6), for example:
-##' y4.dif<-define.dif(y4,difference=c(4,1,3,6))
+##' y4.dif<-define.dif(y4, difference=c(4, 1, 3, 6))
 ##' # The differenced series will be in y4.dif$y.dif, the observations
 ##' # lost by differencing being excluded.
 ##' #
 ##' y4.dif.analysis<-y4.dif$y.dif
 ##' # Give lags the be included in ar- and ma-parts of model:
 ##' #
-##' ar<-c(1,2,4)
+##' ar<-c(1, 2, 4)
 ##' ma<-c(1)
 ##' # Define the multivariate arma model using 'define.model' procedure.
 ##' # Output from 'define.model' will be the patterns of the ar- and ma-
 ##' # parts of the model specified.
 ##' #
-##' Mod <- define.model(kvar=4,ar=ar,ma=ma,reg.var=3)
+##' Mod <- define.model(kvar=4, ar=ar, ma=ma, reg.var=3)
 ##' arp<-Mod$ar.pattern
 ##' map<-Mod$ma.pattern
 ##' # Print out model in 'short form':
@@ -153,7 +153,7 @@
 ##' short.form(arp)
 ##' short.form(map)
 ##' # Now call marima:
-##' Model <- marima(y4.dif.analysis,ar.pattern=arp,ma.pattern=map,
+##' Model <- marima(y4.dif.analysis, ar.pattern=arp, ma.pattern=map, 
 ##'                 penalty=0.0)
 ##' # The estimated model is in the object 'Model':
 ##' #
@@ -163,28 +163,33 @@
 ##' # Multiply the estimated ar-polynomial with difference polynomial
 ##' # to compute the aggregated ar-part of the arma model:
 ##' #
-##' ar.aggregated <- pol.mul(ar.model,dif.poly,L=12)
+##' ar.aggregated <- pol.mul(ar.model, dif.poly, L=12)
 ##' # and print everything out in 'short form':
 ##' #
-##' short.form(ar.aggregated,leading=FALSE)
-##' short.form(ma.model,leading=FALSE)
+##' short.form(ar.aggregated, leading=FALSE)
+##' short.form(ma.model, leading=FALSE)
 ##'
 ##' @references
 ##'
-##' Jenkins,G.M. & Alavi,A.: Some aspects of modelling and forecasting
+##' Jenkins,G.M. & Alavi,A. (1981): Some aspects of modelling and forecasting
 ##'     multivariate time series, Journal of Time Series Analysis,
-##'     Vol. 2, Issue 1, Jan. 1981, pp. 1-47.
+##'     Vol. 2, issue 1, Jan. 1981, pp. 1-47.
 ##'
-##' Madsen, H. (2008) Time Series Analysis, Chapmann \& Hall (in particular
+##' Madsen,H. (2008) Time Series Analysis, Chapmann \& Hall (in particular
 ##' chapter 9: Multivariate time series).
 ##'
-##' Reinsel G.C. (2003) Elements of Multivariate Time Series Analysis,
+##' Reinsel,G.C. (2003) Elements of Multivariate Time Series Analysis,
 ##' Springer Verlag, 2$^{nd}$ ed. pp. 106-114.
 ##'
-##' Spliid, H.: A Fast Estimation Method for the Vector
+##' Spliid,H.: A Fast Estimation Method for the Vector
 ##'    Autoregressive Moving Average Model With Exogenous Variables, Journal
 ##'    of the American Statistical Association, Vol. 78, No. 384, Dec. 1983,
 ##'    pp. 843-849.
+##'
+##' Spliid,H.: Estimation of Multivariate Time Series
+##' with Regression Variables:
+##' 
+##' http://www.imm.dtu.dk/~hspl/marima.use.pdf
 ##'
 ##' www.itl.nist.gov/div898/handbook/pmc/section4/pmc45.htm
 ##'
@@ -295,12 +300,12 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
         print(DATA[(N - 4):N, ])
         cat( " \n")
         cat(" Calling parameters in use: \n")
-        cat(" max.iter= ", max.iter, ", means =", means, ", penalty =",
-            penalty, ", \n")
-        cat(" weight =", weight, ", Plot = ", Plot,
+        cat(" max.iter = ", max.iter, ", means = ", means, ",
+        penalty = ", penalty, ", \n")
+        cat(" weight = ", weight, ", Plot = ", Plot,
             ", Check = ", Check, " \n")
         cat(" The above printout can be suppressed ",
-         "by calling with Check=FALSE. \n ")
+         "by calling with Check = FALSE. \n ")
     }
     # End-of-control output
 
@@ -660,6 +665,7 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
     }   
     
     obj <- list(N = N,
+                DATA = DATA,
                 kvar = kvar,
                 ar.estimates = ar.estimates,
                 ma.estimates = ma.estimates,
