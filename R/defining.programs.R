@@ -98,6 +98,9 @@ define.model <- function(kvar = 1, ar = 0, ma = 0, rem.var = 0,
                          reg.var = 0, no.dep = NULL, print = 0,
                          ar.fill = NULL, ar.rem = NULL, ma.fill = NULL,
                          ma.rem = NULL, indep = NULL) {
+
+    "[" <- function(x, ...) .Primitive("[")(x, ..., drop = FALSE)
+   
     if (print != 0) {
         cat("Call = kvar, ar, ma, rem.var, reg.var, no.dep  \n", 
             "kvar", kvar, "ar", ar, "ma", ma, "rem.var", rem.var,
@@ -120,6 +123,8 @@ define.model <- function(kvar = 1, ar = 0, ma = 0, rem.var = 0,
 
     ind.poly <- array(data = 0, dim = c(kvar, kvar, L))
 
+# cat("L =",L,"\n")
+
     if (length(ar) > 0) {
         if (max(ar) > 0) {
             for (i in 1:length(ar)) {
@@ -127,6 +132,8 @@ define.model <- function(kvar = 1, ar = 0, ma = 0, rem.var = 0,
             }
         }
     }
+
+# cat("ind.poly (1) \n"); print(ind.poly)
 
     if (max(ma) > 0) {
         if (length(ma) > 0) {
@@ -136,6 +143,8 @@ define.model <- function(kvar = 1, ar = 0, ma = 0, rem.var = 0,
         }
     }
 
+# cat("ind.poly (2) \n"); print(ind.poly)
+ 
     if (print != 0) {
         cat("ind.poly=", ind.poly, "\n")
         cat("rem.var=", rem.var, "\n")
@@ -154,6 +163,9 @@ define.model <- function(kvar = 1, ar = 0, ma = 0, rem.var = 0,
             if (print != 0) {
                 cat("ind.poly", ind.poly[reg.var, , ], "\n")
             }
+
+# cat("ind.poly (3) \n"); print(ind.poly)
+            
             if (L > max(ar)) {
                 M <- max(ar) + 1
 
@@ -186,15 +198,24 @@ define.model <- function(kvar = 1, ar = 0, ma = 0, rem.var = 0,
 
     indic <- as.integer(indic)
 
+#    cat("ind.poly \n") ; print(ind.poly)
+
     poly <- array(ind.poly, dim = c(kvar, kvar, (max(ar) + max(ma))))
+
+#    cat("poly (5) \n") ; print(poly)
+
+    
     ar.poly <- array(diag(kvar), dim = (c(kvar, kvar, 1)))
     ma.poly <- ar.poly
-    if (max(ar) > 0) {
-        ar.poly <- check.one(poly[, , 1:max(ar)])
+
+        if (max(ar) > 0) {
+        ar.poly <- lead.one(poly[, , 1:max(ar)],1)
     }
     if (max(ma) > 0) {
-        ma.poly <- check.one(poly[, , M:L])
+        ma.poly <- lead.one(poly[, , M:L],1)
     }
+
+# cat("ar and ma poly (6) \n");print(ar.poly);print(ma.poly)    
 
     if (!is.null(indep)) {
         indep <- indep[indep > 0 & indep <= kvar]
@@ -213,6 +234,8 @@ define.model <- function(kvar = 1, ar = 0, ma = 0, rem.var = 0,
             }
         }
     }
+
+# cat("ar and ma poly (7) \n");print(ar.poly);print(ma.poly)   
 
     if (!is.null(no.dep)) {
         # cat('no.dep = ', no.dep, '\n')
@@ -236,6 +259,8 @@ define.model <- function(kvar = 1, ar = 0, ma = 0, rem.var = 0,
         }
     }
 
+# cat("ar and ma poly (8) \n");print(ar.poly);print(ma.poly)
+    
     if (!is.null(ar.fill)) {
         arfill <- matrix(ar.fill, nrow = 3)
         if (length(c(arfill)) != length(c(ar.fill))) {
@@ -279,6 +304,8 @@ define.model <- function(kvar = 1, ar = 0, ma = 0, rem.var = 0,
             ma.poly[marem[1, j], marem[2, j], (marem[3, j] + 1)] <- 0
         }
     }
+
+# cat("ar and ma poly (8) \n");print(ar.poly);print(ma.poly) 
 
     results <- list(ar.pattern = ar.poly, ma.pattern = ma.poly)
     return(results)
@@ -427,15 +454,15 @@ short.form <- function(poly = NULL, name = "Lag=", leading = TRUE,
 ##' @export
 
 define.dif <- function(series = series, difference = NULL) {
-    Names <- rownames(series)
-    d <- dim(series)
-    T <- 0
-    if (d[1] > d[2]) {
-        series <- t(series)
-        T <- 1
-        Names <- rownames(series)
-    }
-    d <- dim(series)
+
+ "[" <- function(x, ...) .Primitive("[")(x, ..., drop = FALSE)
+
+ series <- as.matrix(series)
+
+ if ( dim(series)[1] > dim(series)[2] ) series <- t(series)
+ Names <- rownames(series)
+ d <- dim(series)
+ T <- 0
     kvar <- d[1]
     OMIT <- 0
     DM <- rep(0, kvar)
@@ -584,7 +611,6 @@ define.sum <- function(series = NULL, difference = NULL, averages = 0) {
     }
     return(list(series.sum = series))
 }
-
 
 ##' @title season.lagging
 ##' 

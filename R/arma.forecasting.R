@@ -180,7 +180,7 @@ arma.forecast <- function( series=NULL, marima=NULL,
     forecast <- arma.forecastingY(series = Y, ar.poly = AR,
        ma.poly = MA, nstart = nstart, nstep = nstep, Rand = Rand,
           Regr = Regr, marima = marima)
-
+    
     pred.var <- forec.var(marima, nstep = nstep, dif.poly )$pred.var
 
     return(list(nstart = nstart, nstep = nstep,
@@ -193,19 +193,26 @@ arma.forecast <- function( series=NULL, marima=NULL,
 arma.forecastingY <- function(series = NULL, ar.poly = NULL,
   ma.poly = NULL, nstart = NULL, nstep = NULL, Rand = NULL,
   Regr = NULL, marima = NULL) {
-    "[" <- function(x, ...) .Primitive("[")(x, ..., drop = FALSE)
-    d <- dim(series)
+
+  "[" <- function(x, ...) .Primitive("[")(x, ..., drop = FALSE)
+
+    series <- as.matrix(series)
+         d <- dim(series)
     if (d[1] > d[2]) {
         series <- t(series)
     }
     d <- dim(series)
     k <- d[1]
     N <- d[2]
+    kvar <- k
 
     means    <- marima$mean.pattern
     averages <- marima$averages
     Constant <- marima$Constant
-    cat("dimensions of time series", k, N, "\n")
+
+cat("marima$Constant (1) =",marima$Constant,"\n")
+  
+ #   cat("dimensions of time series", k, N, "\n")
 
     ar <- dim(ar.poly)
     ma <- dim(ma.poly)
@@ -248,12 +255,18 @@ arma.forecastingY <- function(series = NULL, ar.poly = NULL,
             }
         }
 
+  #      cat("suar = ",suar,"\n");         print(suar)
+  #      cat("suma = ",suma,"\n");         print(suma)
+  #      cat("Constant = ",Constant,"\n");
+  #      cat("Constant dimension=", dim(Constant),"\n");  print(Constant)
+
         est <- suma - suar + Constant
+
         forecasts[, i] <- est
-        
-        # cat('ar- & ma-polynomier \n')
-        # print(ar.poly[,,2])
-        # print(ma.poly[,,2])
+
+   # cat('ar- & ma-polynomier \n')
+   # print(ar.poly[,,2])
+   # print(ma.poly[,,2])
 
         if (i <= nstart) {
             for (j in 1:k) {
@@ -408,14 +421,17 @@ forec.var <- function(marima, nstep = 1, dif.poly = NULL) {
 arma.filter <- function(series = NULL, ar.poly = array(diag(kvar),
        dim = c(kvar, kvar, 1)), ma.poly = array(diag(kvar),
        dim = c(kvar, kvar, 1)), means = 1) {
-    "[" <- function(x, ...) .Primitive("[")(x, ..., drop = FALSE)
     
+    "[" <- function(x, ...) .Primitive("[")(x, ..., drop = FALSE)
+
     cat("arma.filter is being called \n")
 
     if (is.null(series)) {
         stop("No input series specified in input to arma.filter \n")
     }
-    d <- dim(series)
+
+    series <- as.matrix(series)
+         d <- dim(series)
     if (d[1] > d[2]) {
         cat("Warning: Input series is transposed to be a k x n series. \n")
         cat("Output (estimated values and residuals) \n")
@@ -430,7 +446,7 @@ arma.filter <- function(series = NULL, ar.poly = array(diag(kvar),
 
     averages <- rep(0, kvar)
     means <- rep(1, kvar)
-    if (length(vmeans == 1)) {
+    if (length(vmeans) == 1) {
         if (vmeans != 1) {
             means <- rep(0, kvar)
         }
@@ -444,11 +460,14 @@ arma.filter <- function(series = NULL, ar.poly = array(diag(kvar),
     cat("indicators for means=", means, "\n")
     # cat(averages, "\n")
 
-    ar.poly <- check.one(ar.poly)
-    ma.poly <- check.one(ma.poly)
+#    ar.poly <- check.one(ar.poly)
+#    ma.poly <- check.one(ma.poly)
     
     m <- dim(ar.poly)
     ma <- dim(ma.poly)
+
+#    cat("m  = ",m," \n")
+#    cat("ma = ",ma,"\n")
 
     su0 <- matrix(0, nrow = kvar, ncol = 1)
     extra <- 2 * max(m[3], ma[3])

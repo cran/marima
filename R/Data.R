@@ -21,3 +21,4 @@
 ##'   \item{acc.elg}{Accumulated effect of legislation in years} 
 ##' }
 NULL
+

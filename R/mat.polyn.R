@@ -27,6 +27,8 @@
 ##' @export
 
 pol.inv <- function(phi, L) {
+   
+  "[" <- function(x, ...) .Primitive("[")(x, ..., drop = FALSE)
     aphi <- check.one(phi)
     k <- dim(aphi)[1]
     # if (dim(phi)[3]==dim(aphi)[3]) {up <- L+1}
@@ -38,10 +40,12 @@ pol.inv <- function(phi, L) {
         if (ip > 1) {
             for (LL in 2:up) {
                 for (J in 2:LL) {
-                  if (J <= ip) {
-                    help <- polinv[, , LL + 1 - J] %*% aphi[, , J]
-                    polinv[, , LL] <- polinv[, , LL] - help
-                  }
+                   if (J <= ip) {
+      help <- matrix(polinv[, , LL + 1 - J], nrow=k ) %*%
+              matrix(aphi[, , J], nrow = k )
+      polinv[, , LL] <- matrix(polinv[, , LL], nrow = k) -
+                        matrix(help, nrow = k)
+                   }
                 }
             }
         }
@@ -75,6 +79,8 @@ pol.inv <- function(phi, L) {
 ##' @export
 
 pol.mul <- function(eta, theta, L) {
+    
+  "[" <- function(x, ...) .Primitive("[")(x, ..., drop = FALSE)
     eta <- check.one(eta)
     theta <- check.one(theta)
     if (L < 1) {
@@ -90,8 +96,10 @@ pol.mul <- function(eta, theta, L) {
         for (J in 1:LL) {
             if (J <= iet) {
                 if (LL + 1 - J <= ith) {
-                  help <- eta[, , J] %*% theta[, , LL + 1 - J]
-                  polmul[, , LL] <- polmul[, , LL] + help
+        help <- matrix(eta[, , J], nrow = k) %*%
+            matrix(theta[, , LL + 1 - J], nrow = k)
+        polmul[, , LL] <- matrix(polmul[, , LL], nrow = k) +
+            matrix(help, nrow = k)
                 }
             }
         }
@@ -120,6 +128,8 @@ pol.mul <- function(eta, theta, L) {
 ##' @export
 
 rand.shock <- function(ar.poly, ma.poly, L) {
+    
+ "[" <- function(x, ...) .Primitive("[")(x, ..., drop = FALSE)    
     ar <- check.one(ar.poly)
     ma <- check.one(ma.poly)
     invar <- pol.inv(ar, (L + 1))
@@ -148,6 +158,9 @@ rand.shock <- function(ar.poly, ma.poly, L) {
 ##' @export
 
 inverse.form <- function(ar.poly, ma.poly, L) {
+
+ "[" <- function(x, ...) .Primitive("[")(x, ..., drop = FALSE)
+ 
     ar <- check.one(ar.poly)
     ma <- check.one(ma.poly)
     inma <- pol.inv(ma, (L + 1))
@@ -176,6 +189,8 @@ inverse.form <- function(ar.poly, ma.poly, L) {
 
 check.one <- function(polyn = NULL) {
 
+    "[" <- function(x, ...) .Primitive("[")(x, ..., drop = FALSE)
+
     if (is.null(polyn)) {
         stop("No input polynomial to 'check.one'. \n")
     }
@@ -192,15 +207,37 @@ check.one <- function(polyn = NULL) {
     if (length(dim(polyn)) < 3) {
         pol2 <- array(polyn, dim = c(d, d, 1))
     }
-    if (max(abs(pol2[, , 1] - diag(1, d))) > 1e-16) {
+    
+# cat("pol2",pol2,"\n")
+#     print(pol2)
+# cat("max(abs(pol2[, , 1]))", max(abs(pol2[, , 1])),"\n")
+# cat("diag(1,d)",diag(1,d),"\n")
+
+    Dif <- c(pol2[, , 1])-c(diag(1, d))
+        if (max(abs(Dif)) > 1e-16) {
         pol2 <- lead.one(pol2, +1)
     }
     pol2[, , 1] <- diag(1, d)  # set leading polyn = unity exactly.
     return(pol2)
 }
 
-lead.one <- function(polyn, add = 0) {
+##' @title lead.one
+##' @description Function to add (or remove) a leading unity matrix to (from)
+##' an  array
+##' (being an array representation of ar- or ma-polynomial).
+##' 
+##' @param polyn an input polynomium (an array).
+##' @param add indicator for adding or removing unity matrix:
+##' +1 = add leading unity matrix,
+##' -1 = remove leading matrix.
+##' @return changed array (with leading unity matrix inserted or
+##' removed).
+##'
+##' @export
 
+lead.one <- function(polyn = NULL, add = 0) {
+
+    "[" <- function(x, ...) .Primitive("[")(x, ..., drop = FALSE)
     #
     # title: lead.one
     # 
@@ -259,6 +296,8 @@ lead.one <- function(polyn, add = 0) {
 ##' @export
 
 pol.order <- function(polyn = NULL, digits = 12) {
+    
+     "[" <- function(x, ...) .Primitive("[")(x, ..., drop = FALSE)
     pol.order <- NULL
     if (is.array(polyn)) {
         if (dim(polyn)[1] == dim(polyn)[2]) {

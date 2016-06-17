@@ -193,7 +193,7 @@
 ##'
 ##' www.itl.nist.gov/div898/handbook/pmc/section4/pmc45.htm
 ##'
-##' @importFrom stats arima complete.cases cov lm step
+##' @importFrom stats arima complete.cases cov lm step var
 ##' 
 ##' @export
 
@@ -201,6 +201,9 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
                    ma.pattern = NULL, means = 1,
                    max.iter = 50, penalty = 0, weight = 0.33,
                    Plot = 'none', Check = FALSE) {
+    
+    "[" <- function(x, ...) .Primitive("[")(x, ..., drop = FALSE)
+   DATA <- as.matrix(DATA)
     
     Test <- FALSE
     kvar <- min(dim(DATA))
@@ -586,8 +589,19 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
             
             MADATA[, i] <- weight * MADATA[, i] + (1 - weight) * res
             # cat('Compute Trace', iterate,'\n')
-            log.det[iterate] <- log(det(cov(MADATA[, randoms])))
-            trace[iterate] <- sum(diag(cov(MADATA[, 1:kvar])))
+
+#            if (length(randoms) == 1) { Var <- var(MADATA[, randoms])
+#            log.det[iterate] <- log(Var)
+#            trace[iterate]   <- Var
+#                                    }
+#            if (length(randoms) > 1 ) {  
+#            log.det[iterate] <- log(det(cov(MADATA[, randoms])))
+#             trace[iterate]  <- sum(diag(cov(MADATA[, 1:kvar])))
+#                                    }
+                
+          log.det[iterate] <- log(det(cov(as.matrix(MADATA[, randoms]))))
+          trace[iterate]   <- sum(diag(cov(as.matrix(MADATA[, 1:kvar]))))
+                
             MADATA <- fill.out(DATAarray = array(MADATA,
                                    dim = c(N, kvar, M)), SAR = SAM)
             MADATA <- matrix(MADATA, nrow = N)
@@ -621,8 +635,9 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
     residuals <- t(MADATA[, 1:kvar])
     rownames(residuals) <- paste("u", 1:kvar, sep = "")
     
-    covu <- cov(MADATA[, 1:kvar])
-    covy <- cov(ARDATA[, 1:kvar])
+    covu <- cov(as.matrix(MADATA[, 1:kvar]))
+    covy <- cov(as.matrix(ARDATA[, 1:kvar]))
+
     colnames(covu) <- rownames(residuals)
     rownames(covu) <- rownames(residuals)
     colnames(covy) <- paste("y", c(1:kvar), sep = "")
@@ -654,13 +669,17 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
     out.ma.pattern <- abs(ma.estimates)
     out.ma.pattern[which(out.ma.pattern > 0)] <- 1
 
-    am<-averages*means
+    am<-averages * means
     Constant <- am
     lar <- length(c(ar.estimates))/(kvar*kvar)
     if (lar > 1) {
         for (i in 2:lar) {
-        Constant <- Constant + ar.estimates[,,i]%*%am
-#       cat("Constant =",Constant,"\n")
+        Constant <- Constant + matrix(ar.estimates[,,i],nrow=kvar) %*% am
+
+  #      cat("variable am",am,"\n")
+  #       cat("Control output fram marima \n")
+  #       cat("Constant =",Constant,"\n")
+
         }
     }   
     
