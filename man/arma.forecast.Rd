@@ -5,7 +5,7 @@
 \title{arma.forecast}
 \usage{
 arma.forecast(series = NULL, marima = NULL, nstart = NULL, nstep = 1,
-  dif.poly = NULL)
+  dif.poly = NULL, check = TRUE)
 }
 \arguments{
 \item{series}{matrix holding the kvar-variate timeseries.
@@ -56,6 +56,9 @@ the forecast-variance/covariance matrices are calculated for the
 differenced time series. If forecasting is wanted for the original
 (not differenced) time series the 'dif.poly' created by define.dif
 must be specified.}
+
+\item{check}{If check=TRUE (default) various checks and
+printouts are carried out.}
 }
 \value{
 forecasts = forecasted values following the nstart first values
@@ -82,26 +85,33 @@ using marima type model.
 
 library(marima)
 data(austr)
-series<-t(austr)
+series<-austr
 Model5 <- define.model(kvar=7, ar=1, ma=1, rem.var=1, reg.var=6:7)
-Marima5 <- marima(series[, 1:90], Model5$ar.pattern, Model5$ma.pattern, 
+Marima5 <- marima(ts(series[1:90, ]), Model5$ar.pattern, Model5$ma.pattern, 
 penalty=1)
+
 nstart  <- 90
 nstep   <- 10
-Forecasts <- arma.forecast(series=series, marima=Marima5, 
-               nstart=nstart, nstep=nstep)
-Year<-series[1, 91:100];
-Predict<-Forecasts$forecasts[2, 91:100]
+cat("Calling arma.forecast.\\n")
+cat("In the example the input series is dim(length,kvar).\\n")
+cat("and of type ts() (timeseries) for illustration. \\n")
+Forecasts <- arma.forecast(series=ts(series), marima=Marima5, 
+               nstart=nstart, nstep=nstep )
+Year<-series[91:100,1]
+One.step <- Forecasts$forecasts[, (nstart+1)]
+One.step
+Predict  <- Forecasts$forecasts[ 2, 91:100]
+Predict
 stdv<-sqrt(Forecasts$pred.var[2, 2, ])
 upper.lim=Predict+stdv*1.645
 lower.lim=Predict-stdv*1.645
 Out<-rbind(Year, Predict, upper.lim, lower.lim)
 print(Out)
 # plot results:
-plot(series[1, 1:100], Forecasts$forecasts[2, ], type='l', xlab='Year', 
+plot(series[1:100, 1], Forecasts$forecasts[2, ], type='l', xlab='Year', 
 ylab='Rate of armed suicides', main='Prediction of suicides by firearms', 
 ylim=c(0.0, 4.1))
-lines(series[1, 1:90], series[2, 1:90], type='p')
+lines(series[1:90, 1], series[1:90, 2], type='p')
 grid(lty=2, lwd=1, col='black')
 Years<-2005:2014
 lines(Years, Predict, type='l')

@@ -2,7 +2,7 @@
 % Please edit documentation in R/arma.forecasting.R
 \name{arma.filter}
 \alias{arma.filter}
-\title{arma.filter}
+\title{arma.,er}
 \usage{
 arma.filter(series = NULL, ar.poly = array(diag(kvar), dim = c(kvar, kvar,
   1)), ma.poly = array(diag(kvar), dim = c(kvar, kvar, 1)), means = 1)
@@ -36,7 +36,12 @@ are subtracted (equivalent to means = c(1, 1, ..., 1)).}
 \value{
 estimates = estimated values for input series
 
-residuals = corresponding residuals
+residuals = corresponding residuals. It is noted that the
+residuals computed by arma.filter may deviate slightly from the
+marima-residuals (which are taken from the last repeated regression
+step performed). The residuals computed by arma.filter are constructed
+by filtering (successive use of the arma model) and using a heuristic
+method for the first residuals.
 
 averages = averages of variables in input series
 
@@ -61,11 +66,12 @@ Model5 <- define.model(kvar=7,ar=1,ma=1,rem.var=1,reg.var=6:7)
 Marima5 <- marima(series,Model5$ar.pattern,Model5$ma.pattern,penalty=1)
 
 # Calculate residuals by filtering
-Resid <- arma.filter(series,Marima5$ar.estimates,
+Resid <- arma.filter(series, Marima5$ar.estimates,
      Marima5$ma.estimates)
+
 # Compare residuals
 
-plot(Marima5$residuals[2,4:89], Resid$residuals[2,5:90],
+plot(Marima5$residuals[2, 5:90], Resid$residuals[2, 5:90],
 xlab='marima residuals', ylab='arma.filter residuals')
 
 }

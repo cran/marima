@@ -53,6 +53,9 @@
 ##' (not differenced) time series the 'dif.poly' created by define.dif
 ##' must be specified.
 ##'
+##' @param check  If check=TRUE (default) various checks and
+##' printouts are carried out.  
+##'
 ##' @return forecasts = forecasted values following the nstart first values
 ##' of the input series (at time points 'nstart+1,...,nstart+nstep').
 ##' The forecasted values will be (over-) written in the input series at
@@ -71,26 +74,33 @@
 ##'
 ##' library(marima)
 ##' data(austr)
-##' series<-t(austr)
+##' series<-austr
 ##' Model5 <- define.model(kvar=7, ar=1, ma=1, rem.var=1, reg.var=6:7)
-##' Marima5 <- marima(series[, 1:90], Model5$ar.pattern, Model5$ma.pattern, 
+##' Marima5 <- marima(ts(series[1:90, ]), Model5$ar.pattern, Model5$ma.pattern, 
 ##' penalty=1)
+##'
 ##' nstart  <- 90
 ##' nstep   <- 10
-##' Forecasts <- arma.forecast(series=series, marima=Marima5, 
-##'                nstart=nstart, nstep=nstep)
-##' Year<-series[1, 91:100];
-##' Predict<-Forecasts$forecasts[2, 91:100]
+##' cat("Calling arma.forecast.\n")
+##' cat("In the example the input series is dim(length,kvar).\n")
+##' cat("and of type ts() (timeseries) for illustration. \n")
+##' Forecasts <- arma.forecast(series=ts(series), marima=Marima5, 
+##'                nstart=nstart, nstep=nstep )
+##' Year<-series[91:100,1]
+##' One.step <- Forecasts$forecasts[, (nstart+1)]
+##' One.step
+##' Predict  <- Forecasts$forecasts[ 2, 91:100]
+##' Predict
 ##' stdv<-sqrt(Forecasts$pred.var[2, 2, ])
 ##' upper.lim=Predict+stdv*1.645
 ##' lower.lim=Predict-stdv*1.645
 ##' Out<-rbind(Year, Predict, upper.lim, lower.lim)
 ##' print(Out)
 ##' # plot results:
-##' plot(series[1, 1:100], Forecasts$forecasts[2, ], type='l', xlab='Year', 
+##' plot(series[1:100, 1], Forecasts$forecasts[2, ], type='l', xlab='Year', 
 ##' ylab='Rate of armed suicides', main='Prediction of suicides by firearms', 
 ##' ylim=c(0.0, 4.1))
-##' lines(series[1, 1:90], series[2, 1:90], type='p')
+##' lines(series[1:90, 1], series[1:90, 2], type='p')
 ##' grid(lty=2, lwd=1, col='black')
 ##' Years<-2005:2014
 ##' lines(Years, Predict, type='l')
@@ -102,14 +112,28 @@
 ##' 
 ##' @export
 
-arma.forecast <- function( series=NULL, marima=NULL, 
-                           nstart=NULL, nstep=1, dif.poly=NULL ) {
-    Y <- series[, c( 1:(nstart + nstep) )]
+arma.forecast <- function( series=NULL, marima=NULL, nstart=NULL, 
+                           nstep=1, dif.poly=NULL , check=TRUE ) {
+ if(check) { 
+    if( is.ts(series) ){
+ series <- as.matrix(series)
+ cat("\n Input series is type ts (timeseries).
+  It will be changed to matrix(...) using as.matrix(...). \n" )
+                     }
+}
+
+    Y <- series  
     d <- dim(Y)
-    if (d[1] > d[2]) {
+
+ if (d[1] > d[2]) {
+ if(check){ cat("\n", "Data matrix is to be transposed. Done! \n") }
         Y <- t(Y)
         d <- dim(Y)
     }
+     cat(d[1], " Variables in series", ", with required length = ",
+         (nstart+nstep),". \n")
+    
+    Y <- Y[ , 1:(nstart + nstep) ]
 
     if (is.null(dif.poly)) {
         dif.poly <- array(diag(d[1]), dim = c( d[1], d[1], 1 ))
@@ -136,8 +160,12 @@ arma.forecast <- function( series=NULL, marima=NULL,
     p  <- dim(AR)[3]
     q  <- dim(MA)[3]
 
+if(check) {
+    cat("\n print AR-model: \n")
     print(AR)
+    cat("\n print MA-model: \n")
     print(MA)
+}
 
     Rand <- rep(TRUE, d[1])
     Regr <- !Rand
@@ -210,7 +238,7 @@ arma.forecastingY <- function(series = NULL, ar.poly = NULL,
     averages <- marima$averages
     Constant <- marima$Constant
 
-cat("marima$Constant (1) =",marima$Constant,"\n")
+cat("Constant =",marima$Constant,"\n")
   
  #   cat("dimensions of time series", k, N, "\n")
 
@@ -310,7 +338,7 @@ cat("marima$Constant (1) =",marima$Constant,"\n")
 
 forec.var <- function(marima, nstep = 1, dif.poly = NULL) {
     
-    cat("Calculation forecasting variances.  \n")
+    cat("Calculation of forecasting variances.  \n")
     sig2 <- marima$resid.cov
     ar.poly <- marima$ar.estimates
     ma.poly <- marima$ma.estimates
@@ -356,7 +384,7 @@ forec.var <- function(marima, nstep = 1, dif.poly = NULL) {
     return(list(pred.var = var[, , 1:d], rand.shock = xsi.poly[, , 1:d]))
 }
 
-##' @title arma.filter 
+##' @title arma.,er 
 ##' 
 ##' @description Filtering of (kvar-variate) time series with marima
 ##' type model.
@@ -391,7 +419,12 @@ forec.var <- function(marima, nstep = 1, dif.poly = NULL) {
 ##'
 ##' @return estimates = estimated values for input series
 ##'
-##' @return residuals = corresponding residuals
+##' @return residuals = corresponding residuals. It is noted that the
+##' residuals computed by arma.filter may deviate slightly from the
+##' marima-residuals (which are taken from the last repeated regression
+##' step performed). The residuals computed by arma.filter are constructed
+##' by filtering (successive use of the arma model) and using a heuristic
+##' method for the first residuals. 
 ##'
 ##' @return averages = averages of variables in input series
 ##'
@@ -409,14 +442,16 @@ forec.var <- function(marima, nstep = 1, dif.poly = NULL) {
 ##' Marima5 <- marima(series,Model5$ar.pattern,Model5$ma.pattern,penalty=1)
 ##'
 ##' # Calculate residuals by filtering
-##' Resid <- arma.filter(series,Marima5$ar.estimates,
+##' Resid <- arma.filter(series, Marima5$ar.estimates,
 ##'      Marima5$ma.estimates)
+##' 
 ##' # Compare residuals
 ##'
-##' plot(Marima5$residuals[2,4:89], Resid$residuals[2,5:90],
+##' plot(Marima5$residuals[2, 5:90], Resid$residuals[2, 5:90],
 ##' xlab='marima residuals', ylab='arma.filter residuals')
 ##'
 ##' @export
+##'
 
 arma.filter <- function(series = NULL, ar.poly = array(diag(kvar),
        dim = c(kvar, kvar, 1)), ma.poly = array(diag(kvar),

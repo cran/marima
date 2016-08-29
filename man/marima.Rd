@@ -23,7 +23,10 @@ not care about it. Also, and consequently, the output residuals and
 fitted values matrices are both organised c(kvar, n) at return from marima.
 The DATA is checked for completeness. Cases which include 'NA's or 'NaN's
 are initially left out. A message is given (on the console) and the active
-cases are given in the output object (...$used.cases).}
+cases are given in the output object (...$used.cases). If DATA is a time
+series object it is transformed to a matrix and a warning is given
+( if(is.ts(DATA)) { DATA <- as.matrix(data.frame(DATA)) } and a message
+is given (on the console).}
 
 \item{ar.pattern}{autoregressive pattern for model (see define.model).
 If ar.pattern is not specified a pure ma-model is estimated.}
@@ -76,7 +79,7 @@ Object of class marima containing:
  N            = N length of analysed series
 
  kvar         = dimension of time series (all random and
-   non-random variables.
+   non-random variables).
 
  ar.estimates = ar-estimates
 
@@ -90,20 +93,23 @@ Object of class marima containing:
 
  ma.pvalues   = ma-p-values (approximate)
 
- residuals = estimated residuals (for used.cases)
+ residuals = estimated residuals (for used.cases), leading values
+ (not estimated values) are put equal to NA
 
  fitted    = estimated/fitted values for all data
-(including non random variables) (for used.cases)
+(including non random variables) (for used.cases), leading values
+(not estimated values) are put equal to NA
 
- resid.cov = covariance matrix of (all) residuals
-(including non random variables) (for used.cases)
+ resid.cov = covariance matrix of residuals
+(including non random variables) (computed for used.cases)
 
  data.cov  = covariance matrix of (all)
  input data (for used.cases)
 
  averages  = averages of input variables
 
- Constant  = estimated model constant = (sum_i(ar[, , i])) x averages
+ Constant  = estimated model constant =
+                            (sum_i(ar[, , i])) x averages
 
  call.ar.pattern = calling ar.pattern
 
@@ -129,6 +135,11 @@ Object of class marima containing:
  log.det = log(det(random part of resid.cov))
 
  randoms = which are random variables in problem?
+
+ one.step = one step ahead prediction (for time = N+1)
+ based on whole series from obs. 1 to N. The computation
+ is based on the marima residuals (as taken from the last
+ regression step in the repeated pseudo-regression algorithm).
 }
 \description{
 Estimate multivariate arima and arima-x models.
@@ -190,22 +201,25 @@ short.form(ma.model, leading=FALSE)
 
 }
 \references{
-Jenkins,G.M. & Alavi,A. (1981): Some aspects of modelling and forecasting
-    multivariate time series, Journal of Time Series Analysis,
+Jenkins, G.M. & Alavi, A. (1981): Some aspects of modelling and forecasting
+    multivariate time series, Journal of Time Series Analysis, 
     Vol. 2, issue 1, Jan. 1981, pp. 1-47.
 
-Madsen,H. (2008) Time Series Analysis, Chapmann \& Hall (in particular
+Madsen, H. (2008) Time Series Analysis, Chapmann \& Hall (in particular
 chapter 9: Multivariate time series).
 
-Reinsel,G.C. (2003) Elements of Multivariate Time Series Analysis,
+Reinsel, G.C. (2003) Elements of Multivariate Time Series Analysis, 
 Springer Verlag, 2$^{nd}$ ed. pp. 106-114.
 
-Spliid,H.: A Fast Estimation Method for the Vector
+Shumway, R.H. & Stoffer, D.S. (2000). Time Series Analysis and
+Its Applications, Springer Verlag, (4$^{th}$ ed. 2016).
+
+Spliid, H.: A Fast Estimation Method for the Vector
    Autoregressive Moving Average Model With Exogenous Variables, Journal
-   of the American Statistical Association, Vol. 78, No. 384, Dec. 1983,
+   of the American Statistical Association, Vol. 78, No. 384, Dec. 1983, 
    pp. 843-849.
 
-Spliid,H.: Estimation of Multivariate Time Series
+Spliid, H.: Estimation of Multivariate Time Series
 with Regression Variables:
 
 http://www.imm.dtu.dk/~hspl/marima.use.pdf

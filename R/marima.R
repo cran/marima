@@ -19,7 +19,10 @@
 ##' fitted values matrices are both organised c(kvar, n) at return from marima.
 ##' The DATA is checked for completeness. Cases which include 'NA's or 'NaN's
 ##' are initially left out. A message is given (on the console) and the active
-##' cases are given in the output object (...$used.cases).
+##' cases are given in the output object (...$used.cases). If DATA is a time
+##' series object it is transformed to a matrix and a warning is given
+##' ( if(is.ts(DATA)) { DATA <- as.matrix(data.frame(DATA)) } and a message
+##' is given (on the console).
 ##' @param ar.pattern autoregressive pattern for model (see define.model).
 ##' If ar.pattern is not specified a pure ma-model is estimated.
 ##' @param ma.pattern moving average pattern for model (see define.model).
@@ -64,7 +67,7 @@
 ##'  N            = N length of analysed series
 ##'
 ##'  kvar         = dimension of time series (all random and
-##'    non-random variables.
+##'    non-random variables).
 ##'
 ##'  ar.estimates = ar-estimates
 ##'
@@ -78,20 +81,23 @@
 ##'
 ##'  ma.pvalues   = ma-p-values (approximate)
 ##'
-##'  residuals = estimated residuals (for used.cases)
+##'  residuals = estimated residuals (for used.cases), leading values
+##'  (not estimated values) are put equal to NA
 ##'
 ##'  fitted    = estimated/fitted values for all data
-##' (including non random variables) (for used.cases)
+##' (including non random variables) (for used.cases), leading values
+##' (not estimated values) are put equal to NA
 ##'
-##'  resid.cov = covariance matrix of (all) residuals
-##' (including non random variables) (for used.cases)
+##'  resid.cov = covariance matrix of residuals
+##' (including non random variables) (computed for used.cases)
 ##'
 ##'  data.cov  = covariance matrix of (all)
 ##'  input data (for used.cases)
 ##'
 ##'  averages  = averages of input variables
 ##'
-##'  Constant  = estimated model constant = (sum_i(ar[, , i])) x averages
+##'  Constant  = estimated model constant =
+##'                             (sum_i(ar[, , i])) x averages
 ##'
 ##'  call.ar.pattern = calling ar.pattern
 ##'
@@ -117,6 +123,11 @@
 ##'  log.det = log(det(random part of resid.cov))
 ##'
 ##'  randoms = which are random variables in problem?
+##'
+##'  one.step = one step ahead prediction (for time = N+1)
+##'  based on whole series from obs. 1 to N. The computation
+##'  is based on the marima residuals (as taken from the last
+##'  regression step in the repeated pseudo-regression algorithm).
 ##'
 ##' @source The code is an R code which is based on the
 ##' article (below) by Spliid (1983). A repeated (socalled) pseudo
@@ -171,39 +182,51 @@
 ##'
 ##' @references
 ##'
-##' Jenkins,G.M. & Alavi,A. (1981): Some aspects of modelling and forecasting
-##'     multivariate time series, Journal of Time Series Analysis,
+##' Jenkins, G.M. & Alavi, A. (1981): Some aspects of modelling and forecasting
+##'     multivariate time series, Journal of Time Series Analysis, 
 ##'     Vol. 2, issue 1, Jan. 1981, pp. 1-47.
 ##'
-##' Madsen,H. (2008) Time Series Analysis, Chapmann \& Hall (in particular
+##' Madsen, H. (2008) Time Series Analysis, Chapmann \& Hall (in particular
 ##' chapter 9: Multivariate time series).
 ##'
-##' Reinsel,G.C. (2003) Elements of Multivariate Time Series Analysis,
+##' Reinsel, G.C. (2003) Elements of Multivariate Time Series Analysis, 
 ##' Springer Verlag, 2$^{nd}$ ed. pp. 106-114.
 ##'
-##' Spliid,H.: A Fast Estimation Method for the Vector
+##' Shumway, R.H. & Stoffer, D.S. (2000). Time Series Analysis and
+##' Its Applications, Springer Verlag, (4$^{th}$ ed. 2016).
+##'
+##' Spliid, H.: A Fast Estimation Method for the Vector
 ##'    Autoregressive Moving Average Model With Exogenous Variables, Journal
-##'    of the American Statistical Association, Vol. 78, No. 384, Dec. 1983,
+##'    of the American Statistical Association, Vol. 78, No. 384, Dec. 1983, 
 ##'    pp. 843-849.
 ##'
-##' Spliid,H.: Estimation of Multivariate Time Series
+##' Spliid, H.: Estimation of Multivariate Time Series
 ##' with Regression Variables:
 ##' 
 ##' http://www.imm.dtu.dk/~hspl/marima.use.pdf
 ##'
 ##' www.itl.nist.gov/div898/handbook/pmc/section4/pmc45.htm
 ##'
-##' @importFrom stats arima complete.cases cov lm step var
+##' @importFrom stats arima complete.cases cov lm step var is.ts
 ##' 
 ##' @export
 
-marima <- function(DATA = NULL, ar.pattern = NULL,
-                   ma.pattern = NULL, means = 1,
-                   max.iter = 50, penalty = 0, weight = 0.33,
+marima <- function(DATA = NULL, ar.pattern = NULL, 
+                   ma.pattern = NULL, means = 1, 
+                   max.iter = 50, penalty = 0, weight = 0.33, 
                    Plot = 'none', Check = FALSE) {
     
     "[" <- function(x, ...) .Primitive("[")(x, ..., drop = FALSE)
-   DATA <- as.matrix(DATA)
+
+    if(is.ts(DATA)) {
+        DATA <- as.matrix(data.frame(DATA))
+        cat("Input data is transformed from type = 'time series' (is.ts)
+        to matrix).")
+        cat("Sampling information is ignored. One line is one sample at a
+        certain time point.")
+                    }
+
+    DATA <- as.matrix(DATA)
     
     Test <- FALSE
     kvar <- min(dim(DATA))
@@ -215,11 +238,11 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
         cat("Neither ar- nor ma-part of model specified. \n")
     }
     if (is.null(ar.pattern)) {
-        ar.pattern = array(c(diag(kvar), 0 * diag(kvar)),
+        ar.pattern = array(c(diag(kvar), 0 * diag(kvar)), 
             dim = c(kvar, kvar, 2))
     }
     if (is.null(ma.pattern)) {
-        ma.pattern = array(c(diag(kvar), 0 * diag(kvar)),
+        ma.pattern = array(c(diag(kvar), 0 * diag(kvar)), 
             dim = c(kvar, kvar, 2))
         max.iter <- 3
         till <- 1
@@ -235,12 +258,12 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
         DATA <- t(DATA)
     }
     
-    case = which(complete.cases(DATA))
+    case <- which(complete.cases(DATA))
     All <- 1:max(dim(DATA))
     DATA <- DATA[case, ]
     Leftout <- setdiff(All, case)
     if (length(Leftout) <= 0) {
-        cat("All cases in data, ", min(case), " to ", max(case),
+        cat("All cases in data, ", min(case), " to ", max(case), 
             " accepted for completeness.\n")
     }
     
@@ -276,8 +299,8 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
     if (Check) {
         cat("Control printout (Check=TRUE (default)). \n")
         cat("----------------------\n")
-        cat("Calling marima. Data dimensions (kvar,N) = ", kvar, N, "\n")
-        cat("Coefficient polynomial dimensions = ", dim(AR), " and ",
+        cat("Calling marima. Data dimensions (kvar, N) = ", kvar, N, "\n")
+        cat("Coefficient polynomial dimensions = ", dim(AR), " and ", 
             dim(MA), "\n")
         cat("including leading unity matrix. \n")
         
@@ -301,13 +324,12 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
         cat(" ... \n")
         cat("End of data (5 last observations): \n")
         print(DATA[(N - 4):N, ])
-        cat( " \n")
-        cat(" Calling parameters in use: \n")
-        cat(" max.iter = ", max.iter, ", means = ", means, ",
+        cat("\n Calling parameters in use: \n")
+        cat(" max.iter = ", max.iter, ", means = ", means, ", 
         penalty = ", penalty, ", \n")
-        cat(" weight = ", weight, ", Plot = ", Plot,
+        cat(" weight = ", weight, ", Plot = ", Plot, 
             ", Check = ", Check, " \n")
-        cat(" The above printout can be suppressed ",
+        cat(" The above printout can be suppressed ", 
          "by calling with Check = FALSE. \n ")
     }
     # End-of-control output
@@ -332,7 +354,7 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
     ##
     if(Test) {
              cat("arnam & manam as constructed: \n")
-             cat("dim(arnam),dim(manam) \n")
+             cat("dim(arnam), dim(manam) \n")
              print(arnam)
              print(manam)
              readline("0.5: Press >return to continue ") 
@@ -353,18 +375,18 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
     rownames(DATA) <- as.character(1:dim(DATA)[1])
     DATA <- DATA[cases1, ]
     D <- dim(DATA)
-    X <- lagged.data(DATA = DATA, AR = AR, MA = MA,
+    X <- lagged.data(DATA = DATA, AR = AR, MA = MA, 
                      init = TRUE, means = xmean)
     averages <- X$averages
 
     if(Test) { cat("About X \n")
-               cat(names(X)," \n")
-               cat("Averages =",X$averages,"\n")
+               cat(names(X), " \n")
+               cat("Averages =", X$averages, "\n")
                cat("X$ardata og X$madata = \n")
                na<-dim(X$ardata)[1]
                nm<-dim(X$madata)[1]
-               print(X$ardata[c((1:8),((na-7):na)),])
-               print(X$madata[c((1:8),((nm-7):nm)),])
+               print(X$ardata[c((1:8), ((na-7):na)), ])
+               print(X$madata[c((1:8), ((nm-7):nm)), ])
                readline("1.5: Press <return to continue")
            }
     
@@ -409,14 +431,14 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
     }
 
     if (Test) {
-        cat("arcols = ",arcols,"\n")
-        cat("macols = ",macols,"\n")
+        cat("arcols = ", arcols, "\n")
+        cat("macols = ", macols, "\n")
         readline("2.5: Press <-return to continue")
     }
 
-    ARDATA <- fill.out(DATAarray = array(X$ardata,
+    ARDATA <- fill.out(DATAarray = array(X$ardata, 
                            dim = c(N, kvar, L)), SAR = SAR)
-    MADATA <- fill.out(DATAarray = array(X$madata,
+    MADATA <- fill.out(DATAarray = array(X$madata, 
                            dim = c(N, kvar, M)), SAR = SAM)
     
     ARDATA <- matrix(ARDATA, nrow = N)
@@ -430,16 +452,16 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
 
     if( Test ) {
              cat("SAR and SAM \n")
-             cat(dim(SAR),"..",dim(SAM)," \n")
+             cat(dim(SAR), "..", dim(SAM), " \n")
              print(SAR)
              print(SAM)
              readline( "3.14: Press <return to continue")           
              cat("ARDATA & MADATA \n")
              na <- dim(ARDATA)[1]
              nm <- dim(MADATA)[1]
-             print(ARDATA[c((1:8),((na-7):na)),])
+             print(ARDATA[c((1:8), ((na-7):na)), ])
              cat("..... \n")
-             print(MADATA[c((1:8),((nm-7):nm)),])
+             print(MADATA[c((1:8), ((nm-7):nm)), ])
              readline( "3.15: Press <return to continue")
              }
 
@@ -501,13 +523,13 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
                cat(as.character(MO), "\n")
             readline("4.90: Press <return to continue")
             }
-            # cat(i,M=,'\n')
+            # cat(i, M=, '\n')
             if ( iterate > Iter3 & penalty > 0 ) {
                 MO <- NAM[i]
             }
                 if( Test & iterate== Iter3 + 3 ){
-                cat("NAM[i]= ",as.character(NAM[i]), "\n")
-                cat("MO=     ",as.character(MO)    , "\n")
+                cat("NAM[i]= ", as.character(NAM[i]), "\n")
+                cat("MO=     ", as.character(MO)    , "\n")
                 readline("4.92: Press <return to continue")
             }
             
@@ -516,7 +538,7 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
             if ( Test & iterate==3 ) {
                     cat("ar-colnames=", colar, "\n")
                     cat("ma-colnames=", colma, "\n")
-                    cat("iterate,i", iterate, i, "\n")
+                    cat("iterate, i", iterate, i, "\n")
                     cat(as.character(MO), "\n")
                     readline("5: Press <return to continue")
                 }
@@ -525,13 +547,13 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
                 if (iterate > Iter1) {
                   # cat('Stepwise Regression')
                   if (iterate >= Iter1 & iterate <= Iter3 & penalty > 0) {
-                    MOD <- step(MOD, direction = "backward",
+                    MOD <- step(MOD, direction = "backward", 
                                 k = penalty, trace = FALSE)
                   }
                   if (iterate == Iter3) {
-                    # cat('iterate and i: ',iterate,' , ',i,'\n')
+                    # cat('iterate and i: ', iterate, ' , ', i, '\n')
                     NAM[i] <- as.character(MOD$call[2])
-                    # cat('Model form i = ',NAM[i],' \n')
+                    # cat('Model form i = ', NAM[i], ' \n')
                   }
                 }
             }
@@ -550,7 +572,7 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
                 
                 varia <- names(MOD$coefficients)
                 if(Test){
-                    cat('varia=names(MOD$coefficients=',varia,'\n')
+                    cat('varia=names(MOD$coefficients=', varia, '\n')
                     readline("6: Press <return to continue")
                       }
                 if (length(varia) > 0) {
@@ -584,11 +606,11 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
             }
             
             res <- MOD$residual
-            # cat('i=',i,' ,length(MADATA[,i])=',length(MADATA[,i]),
-            # 'length(residual)=',length(res),'\n')
+            # cat('i=', i, ' , length(MADATA[, i])=', length(MADATA[, i]), 
+            # 'length(residual)=', length(res), '\n')
             
             MADATA[, i] <- weight * MADATA[, i] + (1 - weight) * res
-            # cat('Compute Trace', iterate,'\n')
+            # cat('Compute Trace', iterate, '\n')
 
 #            if (length(randoms) == 1) { Var <- var(MADATA[, randoms])
 #            log.det[iterate] <- log(Var)
@@ -602,7 +624,7 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
           log.det[iterate] <- log(det(cov(as.matrix(MADATA[, randoms]))))
           trace[iterate]   <- sum(diag(cov(as.matrix(MADATA[, 1:kvar]))))
                 
-            MADATA <- fill.out(DATAarray = array(MADATA,
+            MADATA <- fill.out(DATAarray = array(MADATA, 
                                    dim = c(N, kvar, M)), SAR = SAM)
             MADATA <- matrix(MADATA, nrow = N)
             colnames(MADATA) <- colma
@@ -611,25 +633,25 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
     
     rownames(MADATA) <- rownames(ARDATA)
     # cat('Data analysed: .... \n') #
-    # print(ARDATA[1:10,1:kvar])
-    # print(MADATA[1:10,1:kvar])
-    # cat('Dimensions are:',dim(ARDATA[,1:kvar]),' og ',
-    # dim(MADATA[,1:kvar]),'\n')
+    # print(ARDATA[1:10, 1:kvar])
+    # print(MADATA[1:10, 1:kvar])
+    # cat('Dimensions are:', dim(ARDATA[, 1:kvar]), ' og ', 
+    # dim(MADATA[, 1:kvar]), '\n')
     
     fitted <- ARDATA[, 1:kvar] - MADATA[, 1:kvar]
     
-    # cat('Fitted = (1) \n') print(fitted[1:10,])
-    # cat('averages= ',averages,'\n')
-    # cat('means = ',means,'\n')
+    # cat('Fitted = (1) \n') print(fitted[1:10, ])
+    # cat('averages= ', averages, '\n')
+    # cat('means = ', means, '\n')
     
     for (i in 1:kvar) {
         fitted[, i] <- fitted[, i] + averages[i] * means[i]
     }
     colnames(fitted) <- paste("y", 1:kvar, sep = "")
     
-    # cat('Fitted = (2) ... \n') print(fitted[1:10,])
+    # cat('Fitted = (2) ... \n') print(fitted[1:10, ])
     
-    # cat('Iteration shift values',Iter1,' and ',Iter3,'.\n')
+    # cat('Iteration shift values', Iter1, ' and ', Iter3, '.\n')
     
     fitted <- t(fitted)
     residuals <- t(MADATA[, 1:kvar])
@@ -645,20 +667,20 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
     
     mains = "Residual covariance matrix trace"
     if (Plot == "trace" & iterate >= 3) {
-        plot(trace[1:max.iter], main = mains,
-             xlab = "No. of iterations",
+        plot(trace[1:max.iter], main = mains, 
+             xlab = "No. of iterations", 
              ylab = "Computed trace", type = "l")
         grid(col = "blue")
     }
     
-    # cat('Iteration shift at :',Iter1,' and ',Iter3, '\n')
+    # cat('Iteration shift at :', Iter1, ' and ', Iter3, '\n')
     
     mains = "log(det(residual covariance matrix))"
     if (Plot == "log.det" & iterate >= 3) {
-        plot(log.det[1:max.iter],
-             main = mains,
-             xlab = "No. of iterations",
-             ylab = "log(det(residual covariance matrix))",
+        plot(log.det[1:max.iter], 
+             main = mains, 
+             xlab = "No. of iterations", 
+             ylab = "log(det(residual covariance matrix))", 
              type = "l")
         grid(col = "blue")
     }
@@ -674,57 +696,112 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
     lar <- length(c(ar.estimates))/(kvar*kvar)
     if (lar > 1) {
         for (i in 2:lar) {
-        Constant <- Constant + matrix(ar.estimates[,,i],nrow=kvar) %*% am
+        Constant <- Constant + matrix(ar.estimates[, , i], nrow=kvar) %*% am
 
-  #      cat("variable am",am,"\n")
-  #       cat("Control output fram marima \n")
-  #       cat("Constant =",Constant,"\n")
+  #       cat("variable am", am, "\n")
+  #       cat("Control output from marima \n")
+  #       cat("Constant =", Constant, "\n")
 
         }
-    }   
+    }
+
+cat(dim(DATA), " = MARIMA - dimension of data \n")
+N <- dim(DATA)[1]
+kvar <- dim(DATA)[2]
+one.step <- c(DATA[N, ]*0)
+
+# cat(one.step, "MARIMA: one.step \n")
+# Revision <- arma.filter(series = DATA, ar.poly=ar.estimates, 
+#                          ma.poly=ma.estimates)
+# residuals <- Revision$residuals
+
+nc <- N-dim(residuals)[2]
+    if(nc > 0) {
+    Fill      <- matrix(NA, nrow=kvar, ncol=nc)
+    fitted    <- cbind(Fill, fitted)
+    residuals <- cbind(Fill, residuals)
+    colnames(fitted)    <- 1:N
+    colnames(residuals) <- 1:N
+               }
+
+p <- dim(ar.estimates)
+q <- dim(ma.estimates)
+one.step <- Constant
+
+# cat("dimensions of estimates= ", p, q, "\n")
+# cat("   one.step = Constant = ", one.step, " \n")
+#     print(ar.estimates)
+
+    if( p[3] >= 2 ) { 
+        for (i in 2:p[3]) {
+        AA <- matrix(ar.estimates[, , i] , nrow=kvar)
+        BB <- matrix(DATA[(N-i+2), ]     , nrow=kvar)
+#  cat("AA og BB \n")
+#         print(AA)
+#         print(BB)
+     one.step <- one.step - AA %*% BB
+# cat(" p: i = ", i, one.step, "\n")
+     }   }
     
-    obj <- list(N = N,
-                DATA = DATA,
-                kvar = kvar,
-                ar.estimates = ar.estimates,
-                ma.estimates = ma.estimates,
-                Constant     = Constant,
-                ar.fvalues = ar.fvalues,
-                ma.fvalues = ma.fvalues,
-                ar.pvalues = ar.pvalues,
-                ma.pvalues = ma.pvalues,
-                residuals = residuals,
+    if( q[3] >= 2 ) {
+        for (i in 2:q[3]) {
+        AA <- matrix(ma.estimates[, , i]  , nrow=kvar)
+        BB <- matrix(residuals[, (N-i+2)] , nrow=kvar)
+# cat("AA og BB \n")
+#    print(AA)
+#    print(BB)
+        one.step <- one.step + AA %*% BB
+# cat(" q: i = ", i, one.step, "\n")
+     }   }
+
+
+
+   obj <- list( N = N, 
+                DATA = t(DATA), 
+                kvar = kvar, 
+                ar.estimates = ar.estimates, 
+                ma.estimates = ma.estimates, 
+                Constant     = Constant, 
+                ar.fvalues = ar.fvalues, 
+                ma.fvalues = ma.fvalues, 
+                ar.pvalues = ar.pvalues, 
+                ma.pvalues = ma.pvalues, 
+                residuals = residuals, 
                 fitted = fitted, 
-                resid.cov = covu,
-                data.cov = covy,
-                averages = averages,
-                mean.pattern = means,
-                call.ar.pattern = AR,
-                call.ma.pattern = MA,
-                out.ar.pattern = out.ar.pattern,
-                out.ma.pattern = out.ma.pattern,
-                max.iter = max.iter,
+                resid.cov = covu, 
+                data.cov = covy, 
+                averages = averages, 
+                mean.pattern = means, 
+                call.ar.pattern = AR, 
+                call.ma.pattern = MA, 
+                out.ar.pattern = out.ar.pattern, 
+                out.ma.pattern = out.ma.pattern, 
+                max.iter = max.iter, 
                 penalty = penalty, 
-                weight = weight,
-                used.cases = used.cases,
-                trace = trace,
-                log.det = log.det,
-                randoms = randoms)
+                weight = weight, 
+                used.cases = used.cases, 
+                trace = trace, 
+                log.det = log.det, 
+                randoms = randoms, 
+                one.step = one.step )
     class(obj) <- "marima"
+
+    # cat(one.step, " = MARIMA: one.step \n")
+
     obj
-}
+ }
 
 ########### END OF MARIMA ################
 
 fill.out <- function(DATAarray = NULL, SAR = NULL) {
     Lags <- as.numeric(dimnames(SAR)[[3]])
     # cat("Input=\n")
-    # print(DATAarray[1:10,,])
+    # print(DATAarray[1:10, , ])
     # print(SAR)
-    # cat(dim(SAR),dim(DATAarray),"\n")
-    # cat('Lags=',Lags,'\n')
+    # cat(dim(SAR), dim(DATAarray), "\n")
+    # cat('Lags=', Lags, '\n')
     N <- dim(DATAarray)[1]
-    # cat('fill.out: dim=',dim(DATAarray),'\n')
+    # cat('fill.out: dim=', dim(DATAarray), '\n')
     if (length(Lags) > 1) {
         for (i in 2:length(Lags)) {
             use <- (N + 1 - (1:(N - Lags[i])))
@@ -732,8 +809,8 @@ fill.out <- function(DATAarray = NULL, SAR = NULL) {
         }
     }
     # cat("Output=\n")
-    # cat(dim(SAR),dim(DATAarray),"\n")
-    # print(DATAarray[1:10,,])
+    # cat(dim(SAR), dim(DATAarray), "\n")
+    # print(DATAarray[1:10, , ])
     return(DATAarray)
 }
 
@@ -742,10 +819,10 @@ get.models <- function(ARDATA = NULL, AR = NULL) {
     # cat('ARDATA= \n') print(ARDATA)
     kvar <- dim(AR)[1]
     DA <- matrix(0, nrow = kvar, ncol = dim(ARDATA)[2])
-    # print(DA) cat('kvar=',kvar,'\n') print(SAR)
+    # print(DA) cat('kvar=', kvar, '\n') print(SAR)
     for (i in 1:kvar) {
         P <- SAR[i, , ]
-        # cat('i,P',i,P,'\n')
+        # cat('i, P', i, P, '\n')
         LP <- dim(P)[2]
         SP <- sum(P)
         if (SP > 1) {
@@ -754,11 +831,11 @@ get.models <- function(ARDATA = NULL, AR = NULL) {
         if (SP == 1) {
             order = 0
         }
-        # cat('order=',order,'\n')
+        # cat('order=', order, '\n')
         P <- c(P)
         # print(P)
         DA[i, ] <- P
-        # cat('length(P)=',length(P),'\n')
+        # cat('length(P)=', length(P), '\n')
         for (j in (kvar + 1):length(P)) {
             DA[i, j] = j * P[j]
         }
@@ -789,14 +866,14 @@ lm.form <- function(y, arnames, zero) {
     return(formula)
 }
 
-lagged.data <- function(DATA = NULL, AR = NULL, MA = NULL,
+lagged.data <- function(DATA = NULL, AR = NULL, MA = NULL, 
                         init = FALSE, means = 1)
 {
     xmean <- means
     N <- dim(DATA)[1]
     kvar <- dim(DATA)[2]
     
-    # cat('N,kvar=',N,kvar,'\n')
+    # cat('N, kvar=', N, kvar, '\n')
     
     if (length(xmean) == 1) {
         if (xmean == 1) {
@@ -817,19 +894,19 @@ lagged.data <- function(DATA = NULL, AR = NULL, MA = NULL,
         if (means[i] == 1) {
             DATA[, i] <- DATA[, i] - averages[i]
         }
-        # cat('i',i,'mean',averages[i],'\n')
+        # cat('i', i, 'mean', averages[i], '\n')
     }
     
     AR <- check.one(AR)
     MA <- check.one(MA)
     L <- dim(AR)
     M <- dim(MA)
-    # cat('L=',L,'M=',M,'\n')
+    # cat('L=', L, 'M=', M, '\n')
     ar.pos <- rep(0, L[3])
     j <- 0
     for (i in 1:L[3]) {
         coef <- sum(abs(AR[, , i]))
-        # cat('i=',i,'ar.coef.sum=',coef,'\n')
+        # cat('i=', i, 'ar.coef.sum=', coef, '\n')
         if (coef > 0) {
             j <- j + 1
             ar.pos[i] <- j
@@ -840,7 +917,7 @@ lagged.data <- function(DATA = NULL, AR = NULL, MA = NULL,
     j <- 0
     for (i in 1:M[3]) {
         coef <- sum(abs(MA[, , i]))
-        # # cat('i=',i,'ma.coef.sum=',coef,'\n')
+        # # cat('i=', i, 'ma.coef.sum=', coef, '\n')
         if (coef > 0) {
             j <- j + 1
             ma.pos[i] <- j
@@ -854,7 +931,7 @@ lagged.data <- function(DATA = NULL, AR = NULL, MA = NULL,
     rownames(ardata) <- rownames(DATA)
     rownames(madata) <- rownames(DATA)
     
-    # cat('dim(ardata):',dim(ardata),'\n')
+    # cat('dim(ardata):', dim(ardata), '\n')
     if (pr > 1) 
         ardata[, , 2:pr] <- NA
     madata[, , 1:qr] <- 0
@@ -864,8 +941,8 @@ lagged.data <- function(DATA = NULL, AR = NULL, MA = NULL,
     rownames(ardata) <- rownames(DATA)
     rownames(madata) <- rownames(DATA)
     
-    # cat('rownames(DATA)',rownames(DATA)[1:10])
-    # cat('pr=',pr,'qr=',qr,'\n')
+    # cat('rownames(DATA)', rownames(DATA)[1:10])
+    # cat('pr=', pr, 'qr=', qr, '\n')
     # cat('ar-data & ma-data \n')
     # print(ardata) print(madata)
     
@@ -874,7 +951,7 @@ lagged.data <- function(DATA = NULL, AR = NULL, MA = NULL,
     
     if (init) {
         vars <- 1:kvar
-        # cat('variables:',vars,'\n')
+        # cat('variables:', vars, '\n')
         for (i in 1:kvar) {
             if (sum(AR[i, , ]) == 1) {
                 vars[i] = 0
@@ -885,25 +962,25 @@ lagged.data <- function(DATA = NULL, AR = NULL, MA = NULL,
             E <- rep(0, N)
             if (S > 1) {
                 Y <- vars
-                # cat('Y',Y,'\n')
+                # cat('Y', Y, '\n')
                 X <- Y[-i]
                 X <- X[which(X != 0)]
-                # cat('X',X,'\n') cat('i=',i,' Extra=',X,'\n')
-                E <- arima(ardata[, i],
-                      order = c(3, 0, 0),
+                # cat('X', X, '\n') cat('i=', i, ' Extra=', X, '\n')
+                E <- arima(ardata[, i], 
+                      order = c(3, 0, 0), 
                             xreg = ardata[, X])$residuals
                 madata[, i] <- E
             }
         }
     }
     
-    # cat('pr=',pr,'qr=',qr,'\n')
+    # cat('pr=', pr, 'qr=', qr, '\n')
     # cat('ar-data \n')
     # print(ardata)
     # cat('ma-data \n')
     # print(madata)
     
-    return(list(ardata = ardata,
-                madata = madata,
+    return(list(ardata = ardata, 
+                madata = madata, 
                 averages = averages))
 } 
