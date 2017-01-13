@@ -89,11 +89,25 @@ Object of class marima containing:
 
  ma.fvalues   = ma-fvalues (approximate)
 
- ar.pvalues   = ar-p-values (approximate)
+ 
 
- ma.pvalues   = ma-p-values (approximate)
+ ar.stdv      = standard devaitions of ar-estimates (approximate)
 
- residuals = estimated residuals (for used.cases), leading values
+ ma.stdv      = standard deviations of ma-estimates (approximate)
+
+ ar.pvalues   = ar.estimate p-values (approximate). If in the input data two
+ series are identical or one (or more) series is (are)
+ linearly dependent of the
+ the other series the routine lm(...) generates "NA" for estimates
+ t-values, p-values and and parameter standard deviations. In
+ marima the corresponding estimates, F-values and
+ parameter standard deviations
+ are set to 0 (zero) while the p-value(s) are set to "NaN". Can happen
+ only for ar-parameters.
+
+ ma.pvalues   = ma.estimate p-values (approximate)
+
+residuals = estimated residuals (for used.cases), leading values
  (not estimated values) are put equal to NA
 
  fitted    = estimated/fitted values for all data
@@ -123,7 +137,8 @@ Object of class marima containing:
 
  max.iter = max no. of iterations in call
 
- penalty = factor used in AIC model reduction
+ penalty = factor used in AIC model reduction, if penalty=0, no AIC
+    model redukction is performed (default).
 
  weight  = weighting of successive residuals
                     updating (default=0.33)

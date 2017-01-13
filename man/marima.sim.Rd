@@ -10,7 +10,7 @@ marima.sim(kvar = 1, ar.model = NULL, ar.dif = NULL, ma.model = NULL,
 }
 \arguments{
 \item{kvar}{dimension of one observation (from
-kvar variate time series).}
+kvar-variate time series).}
 
 \item{ar.model}{array holding the autoregressive part of model, 
 organised as in the marima$ar.estimates. May be
@@ -22,8 +22,7 @@ empty (default = NULL) when differencing is not included.}
 
 \item{ma.model}{array holding the moving average part of model, 
 organised as in the marima$ma.estimates. May be
-empty (default = NULL) when there is no is no moving
-average part.}
+empty (default = NULL) when there is no moving average part.}
 
 \item{averages}{vector holding the kvar averages of the
 variables in the simulated series.}

@@ -5,7 +5,7 @@
 ##' type 'marima'.
 ##'
 ##' @param kvar   dimension of one observation (from
-##' kvar variate time series).
+##' kvar-variate time series).
 ##' @param ar.model   array holding the autoregressive part of model, 
 ##' organised as in the marima$ar.estimates. May be
 ##' empty (default = NULL) when there is no autoregressive part.
@@ -14,8 +14,7 @@
 ##' empty (default = NULL) when differencing is not included.
 ##' @param ma.model   array holding the moving average part of model, 
 ##' organised as in the marima$ma.estimates. May be
-##' empty (default = NULL) when there is no is no moving
-##' average part.
+##' empty (default = NULL) when there is no moving average part.
 ##' @param averages   vector holding the kvar averages of the
 ##' variables in the simulated series.
 ##' @param resid.cov   (kvar x kvar) innovation covariance matrix.

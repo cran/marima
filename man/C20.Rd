@@ -51,7 +51,7 @@ data(C20)
 }
 \description{
 Two years of prices for 18 shares from the Copenhagen
-Stock Exchange C20 index, covering to most valuable companies.
+Stock Exchange C20 index, covering the most valuable companies.
 Two shares have been removed (Maersk A = almost identical to Maersk B)
 and ISS which is incomplete for the period considered.
 }

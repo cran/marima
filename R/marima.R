@@ -77,11 +77,25 @@
 ##'
 ##'  ma.fvalues   = ma-fvalues (approximate)
 ##'
-##'  ar.pvalues   = ar-p-values (approximate)
+##'  
 ##'
-##'  ma.pvalues   = ma-p-values (approximate)
+##'  ar.stdv      = standard devaitions of ar-estimates (approximate)
 ##'
-##'  residuals = estimated residuals (for used.cases), leading values
+##'  ma.stdv      = standard deviations of ma-estimates (approximate)
+##'
+##'  ar.pvalues   = ar.estimate p-values (approximate). If in the input data two
+##'  series are identical or one (or more) series is (are)
+##'  linearly dependent of the
+##'  the other series the routine lm(...) generates "NA" for estimates
+##'  t-values, p-values and and parameter standard deviations. In
+##'  marima the corresponding estimates, F-values and
+##'  parameter standard deviations
+##'  are set to 0 (zero) while the p-value(s) are set to "NaN". Can happen
+##'  only for ar-parameters.
+##'
+##'  ma.pvalues   = ma.estimate p-values (approximate)
+##'
+##' residuals = estimated residuals (for used.cases), leading values
 ##'  (not estimated values) are put equal to NA
 ##'
 ##'  fitted    = estimated/fitted values for all data
@@ -111,7 +125,8 @@
 ##'
 ##'  max.iter = max no. of iterations in call
 ##'
-##'  penalty = factor used in AIC model reduction
+##'  penalty = factor used in AIC model reduction, if penalty=0, no AIC
+##'     model redukction is performed (default).
 ##'
 ##'  weight  = weighting of successive residuals
 ##'                     updating (default=0.33)
@@ -542,8 +557,8 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
                     cat(as.character(MO), "\n")
                     readline("5: Press <return to continue")
                 }
-            summary(MOD)
-            if (penalty > 1e-04) {
+            # print(summary(MOD))
+            if (penalty > 1e-06) {
                 if (iterate > Iter1) {
                   # cat('Stepwise Regression')
                   if (iterate >= Iter1 & iterate <= Iter3 & penalty > 0) {
@@ -555,7 +570,7 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
                     NAM[i] <- as.character(MOD$call[2])
                     # cat('Model form i = ', NAM[i], ' \n')
                   }
-                }
+               }
             }
             
             if (iterate == max.iter) {
@@ -568,6 +583,8 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
                   ma.fvalues <- ma.estimates
                   ar.pvalues <- ar.estimates
                   ma.pvalues <- ma.estimates
+                  ar.stdv    <- ar.estimates
+                  ma.stdv    <- ma.estimates
                 }
                 
                 varia <- names(MOD$coefficients)
@@ -580,16 +597,40 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
                   numbers <- as.numeric(substr(varia, 3, 10))
                   ars <- which(types == "ar")
                   mas <- which(types == "ma")
+
+                  Summar <- Results(Model=MOD)
+
+                  # cat("Summary = ","\n")
+                  # print(Summar)
+
+                  # print(MOD$coefficients)
+
+                  t <- which(is.na(MOD$coefficients[ars]))
+                  MOD$coefficients[ars][t] <- 0
+
+                  # print(MOD$coefficients)
+                  
                   ar.estimates[i, numbers[ars]] <- -MOD$coefficients[ars]
                   ma.estimates[i, numbers[mas]] <- +MOD$coefficients[mas]
+
                   f.values <- summary(MOD)[[4]][, 3]
+                  f.values <- Summar[, 3]
+                  
                   f.values <- f.values^2
                   ar.fvalues[i, numbers[ars]] <- f.values[ars]
                   ma.fvalues[i, numbers[mas]] <- f.values[mas]
-                  p.values <- summary(MOD)[[4]][, 4]
+
+                  p.values     <- summary(MOD)[[4]][, 4]
+                  p.values     <- Summar[, 4]
                   ar.pvalues[i, numbers[ars]] <- p.values[ars]
                   ma.pvalues[i, numbers[mas]] <- p.values[mas]
-                }
+                  
+                  stdv.values  <- summary(MOD)[[4]][, 2]
+                  stdv.values  <- Summar[ ,2]
+                  
+                  ar.stdv[i,numbers[ars]]  <- stdv.values[ars]
+                  ma.stdv[i,numbers[mas]]  <- stdv.values[mas]
+              }
                 
                 if (iterate == max.iter) {
                   # if(i==1){MOD1<-MOD} if(i==2){MOD2<-MOD}
@@ -597,12 +638,14 @@ marima <- function(DATA = NULL, ar.pattern = NULL,
                   if (i == kvar) {
                     ar.estimates <- array(ar.estimates, dim = dim(AR))
                     ma.estimates <- array(ma.estimates, dim = dim(MA))
-                    ar.fvalues <- array(ar.fvalues, dim = dim(AR))
-                    ma.fvalues <- array(ma.fvalues, dim = dim(MA))
-                    ar.pvalues <- array(ar.pvalues, dim = dim(AR))
-                    ma.pvalues <- array(ma.pvalues, dim = dim(MA))
+                    ar.fvalues   <- array(ar.fvalues,   dim = dim(AR))
+                    ma.fvalues   <- array(ma.fvalues,   dim = dim(MA))
+                    ar.pvalues   <- array(ar.pvalues,   dim = dim(AR))
+                    ma.pvalues   <- array(ma.pvalues,   dim = dim(MA))
+                    ar.stdv      <- array(ar.stdv,      dim = dim(AR))
+                    ma.stdv      <- array(ma.stdv,      dim = dim(MA))
                   }
-                }
+               }
             }
             
             res <- MOD$residual
@@ -765,7 +808,9 @@ one.step <- Constant
                 ar.fvalues = ar.fvalues, 
                 ma.fvalues = ma.fvalues, 
                 ar.pvalues = ar.pvalues, 
-                ma.pvalues = ma.pvalues, 
+                ma.pvalues = ma.pvalues,
+                ar.stdv    = ar.stdv,
+                ma.stdv    = ma.stdv,
                 residuals = residuals, 
                 fitted = fitted, 
                 resid.cov = covu, 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/arma.forecasting.R
 \name{arma.filter}
 \alias{arma.filter}
-\title{arma.,er}
+\title{arma.filter}
 \usage{
 arma.filter(series = NULL, ar.poly = array(diag(kvar), dim = c(kvar, kvar,
   1)), ma.poly = array(diag(kvar), dim = c(kvar, kvar, 1)), means = 1)

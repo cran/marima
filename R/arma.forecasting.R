@@ -257,7 +257,7 @@ cat("Constant =",marima$Constant,"\n")
 
     if( extra > 1 ){
         for (i in 1:extra){
-            forecasts[, i] <- averages * means
+            forecasts[, i] <- yseries[, i]
             residuals[, i] <- yseries[, i] - forecasts[, i]           
         }
     }
@@ -384,7 +384,7 @@ forec.var <- function(marima, nstep = 1, dif.poly = NULL) {
     return(list(pred.var = var[, , 1:d], rand.shock = xsi.poly[, , 1:d]))
 }
 
-##' @title arma.,er 
+##' @title arma.filter 
 ##' 
 ##' @description Filtering of (kvar-variate) time series with marima
 ##' type model.
